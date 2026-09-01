@@ -127,11 +127,12 @@
             <textarea id="f-vturb_embed" spellcheck="false" style="min-height:110px" placeholder='&lt;vturb-smartplayer id="vid-…"&gt;…&lt;/vturb-smartplayer&gt; &lt;script&gt;…player.js…&lt;/script&gt;'></textarea>
             <p class="muted" id="vturb-detect" style="margin:6px 0 10px">Nenhum player detectado ainda.</p>
             <div class="grid2">
-              <div><label>Duração total (segundos)</label><input id="f-duration_seconds" type="number"> <span class="muted" id="dur-fmt"></span></div>
-              <div><label>Minuto do pitch (segundos)</label><input id="f-pitch_seconds" type="number"></div>
-              <div><label>Minuto da oferta (segundos)</label><input id="f-offer_seconds" type="number"></div>
-              <div><label>Minuto do botão no Vturb (segundos)</label><input id="f-button_seconds" type="number"></div>
+              <div><label>Duração total do vídeo</label><input id="f-duration_seconds" class="tempo" placeholder="1:07:30 · 15:00 · 900" inputmode="numeric"> <span class="muted th" data-for="f-duration_seconds"></span></div>
+              <div><label>Momento do pitch</label><input id="f-pitch_seconds" class="tempo" placeholder="58:20 ou 1:02:00" inputmode="numeric"> <span class="muted th" data-for="f-pitch_seconds"></span></div>
+              <div><label>Momento da oferta</label><input id="f-offer_seconds" class="tempo" placeholder="1:05:00" inputmode="numeric"> <span class="muted th" data-for="f-offer_seconds"></span></div>
+              <div><label>Momento do botão no Vturb</label><input id="f-button_seconds" class="tempo" placeholder="1:05:00" inputmode="numeric"> <span class="muted th" data-for="f-button_seconds"></span></div>
             </div>
+            <p class="muted" style="margin-top:4px">Aceita <b>horas:minutos:segundos</b>, <b>minutos:segundos</b> ou segundos puros.</p>
           </div>
           <div class="card">
             <h2>Oferta e Pixel</h2>
@@ -236,7 +237,32 @@ const PAGE_BASE = "https://fabiomsam-cloud.github.io/sou-webinario-52b91323/";
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 const $ = (id) => document.getElementById(id);
-const CAMPOS = ["name","slug","contest_code","duration_seconds","pitch_seconds","offer_seconds","button_seconds","checkout_url","offer_name","meta_pixel_id","meta_capi_token","waiting_minutes","open_hour","close_hour","audience_peak"];
+const CAMPOS = ["name","slug","contest_code","checkout_url","offer_name","meta_pixel_id","meta_capi_token","waiting_minutes","open_hour","close_hour","audience_peak"];
+const TEMPO = ["duration_seconds","pitch_seconds","offer_seconds","button_seconds"];
+
+// "1:07:30" → 4050 · "15:00" → 900 · "900" → 900 · inválido → null
+function parseTempo(str) {
+  const s = String(str || "").trim();
+  if (!s) return null;
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+  const p = s.split(":").map(x => x.trim());
+  if (p.length < 2 || p.length > 3 || p.some(x => !/^\d+$/.test(x))) return NaN;
+  const n = p.map(Number);
+  return p.length === 3 ? n[0] * 3600 + n[1] * 60 + n[2] : n[0] * 60 + n[1];
+}
+function fmtHMS(sec) {
+  if (sec == null || sec === "") return "";
+  sec = Number(sec);
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return (h ? h + ":" + String(m).padStart(2, "0") : String(m)) + ":" + String(s).padStart(2, "0");
+}
+function atualizaHintTempo(input) {
+  const hint = document.querySelector('.th[data-for="' + input.id + '"]');
+  if (!hint) return;
+  const v = parseTempo(input.value);
+  hint.textContent = input.value.trim() === "" ? "" :
+    (v == null || isNaN(v)) ? "formato inválido" : "= " + v + "s (" + fmtT(v) + ")";
+}
 
 // O Vturb entrega um bloco <vturb-smartplayer> + <script>; extraímos daqui o
 // id do player e a URL do player.js (é o que o banco guarda e a sala usa).
@@ -323,6 +349,7 @@ $("btn-novo").onclick = async () => {
 async function selecionar(id) {
   W = webinars.find(w => w.id === id); if (!W) return;
   CAMPOS.forEach(c => { $("f-" + c).value = W[c] ?? ""; });
+  TEMPO.forEach(c => { const el = $("f-" + c); el.value = fmtHMS(W[c]); atualizaHintTempo(el); });
   $("f-vturb_embed").value = (W.vturb_player_id && W.vturb_player_id !== "PLACEHOLDER" && W.vturb_script_url)
     ? '<vturb-smartplayer id="vid-' + W.vturb_player_id + '" style="display: block; margin: 0 auto; width: 100%;">'
       + '<div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 56.25% 0 0; z-index: 0; background-color: black;"></div>'
@@ -373,6 +400,16 @@ function renderChecklist() {
 $("btn-salvar").onclick = async () => {
   const upd = {};
   CAMPOS.forEach(c => { const v = $("f-" + c).value.trim(); upd[c] = v === "" ? null : (NUMS.includes(c) ? Number(v) : v); });
+  for (const c of TEMPO) {
+    const raw = $("f-" + c).value.trim();
+    if (raw === "") { upd[c] = null; continue; }
+    const v = parseTempo(raw);
+    if (v == null || isNaN(v)) {
+      alert('Tempo inválido em "' + $("f-" + c).previousElementSibling?.textContent + '" — use HH:MM:SS, MM:SS ou segundos.');
+      return;
+    }
+    upd[c] = v;
+  }
   const emb = $("f-vturb_embed").value.trim();
   if (emb) {
     const { id, src } = parseVturb(emb);
@@ -517,6 +554,7 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
 });
 
 $("f-vturb_embed").addEventListener("input", vturbDetect);
+TEMPO.forEach(c => $("f-" + c).addEventListener("input", function () { atualizaHintTempo(this); }));
 
 sb.auth.getSession().then(({ data }) => { if (data.session) boot(); });
 </script>
