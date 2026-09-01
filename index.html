@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Aula ao vivo — garanta sua vaga</title>
+<style>
+  :root{
+    --bg:#0b0f1a; --card:#121829; --line:#232c45;
+    --txt:#eef1f8; --mut:#9aa4bf;
+    --acc:#22c55e; --acc2:#16a34a; --gold:#fbbf24;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px 48px}
+  .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#f87171;font-weight:700;font-size:.8rem;letter-spacing:.08em;padding:6px 14px;border-radius:999px;margin-bottom:18px}
+  .dot{width:8px;height:8px;border-radius:50%;background:#ef4444;animation:pulse 1.2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  h1{font-size:clamp(1.5rem,5vw,2.2rem);text-align:center;max-width:640px;line-height:1.25;margin-bottom:10px}
+  h1 em{color:var(--gold);font-style:normal}
+  .sub{color:var(--mut);text-align:center;max-width:520px;margin-bottom:28px;font-size:1rem;line-height:1.5}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px 22px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+  label{display:block;font-size:.85rem;font-weight:600;color:var(--mut);margin:14px 0 6px}
+  input,select{width:100%;background:#0d1322;border:1px solid var(--line);border-radius:10px;color:var(--txt);padding:13px 14px;font-size:1rem;outline:none;transition:border .15s}
+  input:focus,select:focus{border-color:var(--acc)}
+  button{width:100%;margin-top:22px;background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:12px;color:#04120a;font-size:1.05rem;font-weight:800;padding:16px;cursor:pointer;letter-spacing:.02em;transition:transform .1s,filter .15s}
+  button:hover{filter:brightness(1.08)}
+  button:active{transform:scale(.98)}
+  button:disabled{opacity:.6;cursor:wait}
+  .safe{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--mut);font-size:.78rem;margin-top:14px}
+  .err{color:#f87171;font-size:.85rem;margin-top:10px;display:none;text-align:center}
+  .loading{color:var(--mut);text-align:center;padding:40px 0}
+</style>
+</head>
+<body>
+  <div class="badge"><span class="dot"></span> AULA AO VIVO</div>
+  <h1 id="titulo">Garanta sua vaga na <em>aula ao vivo</em></h1>
+  <p class="sub">Preencha seus dados abaixo para entrar na sala. As vagas da sessão são limitadas.</p>
+
+  <div class="card">
+    <div class="loading" id="loading">Carregando…</div>
+    <form id="form" style="display:none">
+      <label for="nome">Seu nome</label>
+      <input id="nome" type="text" autocomplete="name" required placeholder="Nome completo">
+      <label for="email">Seu melhor e-mail</label>
+      <input id="email" type="email" autocomplete="email" required placeholder="voce@email.com">
+      <label for="phone">Seu WhatsApp (com DDD)</label>
+      <input id="phone" type="tel" autocomplete="tel" required placeholder="(92) 99999-9999" inputmode="numeric">
+      <div id="perguntas"></div>
+      <button type="submit" id="btn">QUERO GARANTIR MINHA VAGA</button>
+      <div class="err" id="err">Não foi possível concluir. Confira os campos e tente de novo.</div>
+      <div class="safe">🔒 Seus dados estão seguros. Sem spam.</div>
+    </form>
+  </div>
+
+<script src="assets/app.js"></script>
+<script>
+(async function () {
+  const slug = SW.q("w");
+  if (!slug) { document.getElementById("loading").textContent = "Link inválido."; return; }
+
+  const cfg = await SW.api("/cadastro?w=" + encodeURIComponent(slug));
+  if (cfg.error) { document.getElementById("loading").textContent = "Aula indisponível no momento."; return; }
+
+  document.getElementById("titulo").innerHTML =
+    'Garanta sua vaga: <em>' + cfg.name + '</em>';
+  document.title = cfg.name + " — garanta sua vaga";
+
+  // Pixel: PageView para todos; Lead SÓ quando o servidor aprovar a qualificação.
+  if (cfg.pixel_id) {
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', cfg.pixel_id);
+    fbq('track', 'PageView');
+  }
+
+  const wrap = document.getElementById("perguntas");
+  (cfg.qualification || []).forEach(function (q) {
+    const l = document.createElement("label");
+    l.textContent = q.label; l.htmlFor = "q_" + q.id;
+    const s = document.createElement("select");
+    s.id = "q_" + q.id; s.required = true; s.dataset.qid = q.id;
+    s.innerHTML = '<option value="">Selecione…</option>' +
+      (q.options || []).map(o => '<option value="' + o.value + '">' + o.label + '</option>').join("");
+    wrap.appendChild(l); wrap.appendChild(s);
+  });
+
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("form").style.display = "block";
+
+  document.getElementById("form").addEventListener("submit", async function (ev) {
+    ev.preventDefault();
+    const btn = document.getElementById("btn"), err = document.getElementById("err");
+    btn.disabled = true; btn.textContent = "GARANTINDO SUA VAGA…"; err.style.display = "none";
+
+    const answers = {};
+    wrap.querySelectorAll("select").forEach(s => { answers[s.dataset.qid] = s.value; });
+
+    try {
+      const out = await SW.api("/cadastro", {
+        method: "POST",
+        body: JSON.stringify({
+          w: slug,
+          name: document.getElementById("nome").value.trim(),
+          email: document.getElementById("email").value.trim(),
+          phone: document.getElementById("phone").value.trim(),
+          answers: answers,
+          utm: SW.utm(),
+          fbp: SW.cookie("_fbp"),
+          fbc: SW.cookie("_fbc"),
+          page_url: location.href,
+        }),
+      });
+      if (!out.ok) throw new Error(out.error || "falha");
+
+      SW.saveToken(slug, out.token);
+      // Lead deduplicado browser+CAPI: o servidor manda o event_id só p/ qualificado inédito.
+      if (out.pixel && window.fbq) {
+        fbq("track", "Lead", {}, { eventID: out.pixel.event_id });
+      }
+      setTimeout(function () {
+        location.href = "sala/?w=" + encodeURIComponent(slug) + "&t=" + out.token;
+      }, out.pixel ? 400 : 0);
+    } catch (e) {
+      err.style.display = "block";
+      btn.disabled = false; btn.textContent = "QUERO GARANTIR MINHA VAGA";
+    }
+  });
+})();
+</script>
+</body>
+</html>

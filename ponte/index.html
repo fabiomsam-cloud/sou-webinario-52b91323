@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Abrindo sua matrícula…</title>
+<style>
+  body{background:#0b0f1a;color:#eef1f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center}
+  .spin{width:44px;height:44px;border:4px solid #232c45;border-top-color:#22c55e;border-radius:50%;animation:g .8s linear infinite}
+  @keyframes g{to{transform:rotate(360deg)}}
+  a{display:none;background:#22c55e;color:#04120a;font-weight:800;padding:14px 26px;border-radius:12px;text-decoration:none}
+</style>
+</head>
+<body>
+  <div class="spin"></div>
+  <p id="txt">Abrindo sua matrícula…</p>
+  <a id="fallback" href="#">IR PARA A MATRÍCULA</a>
+<script src="../assets/app.js"></script>
+<script>
+// Página-ponte do botão do Vturb: registra o clique (identificado pelo token
+// salvo no navegador desde a entrada na sala) e redireciona ao checkout Hubla.
+// NUNCA bloqueia a venda: sem token → clique anônimo; erro → tenta de novo.
+(async function () {
+  const slug = SW.q("w");
+  const token = slug ? SW.getToken(slug) : null;
+  async function ir(comToken) {
+    const out = await SW.api("/clique", {
+      method: "POST",
+      body: JSON.stringify(comToken ? { w: slug, t: token } : { w: slug }),
+    });
+    if (!out.url) throw new Error(out.error || "sem_url");
+    location.replace(out.url);
+  }
+  try { await ir(!!token); }
+  catch (e1) {
+    try { await ir(false); }
+    catch (e2) {
+      document.getElementById("txt").textContent = "Clique no botão abaixo para continuar:";
+      const a = document.getElementById("fallback");
+      a.style.display = "inline-block";
+      a.onclick = function (ev) { ev.preventDefault(); ir(false).catch(function(){ ir(!!token); }); };
+    }
+  }
+})();
+</script>
+</body>
+</html>
