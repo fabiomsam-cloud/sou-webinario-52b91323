@@ -103,7 +103,10 @@
        body position:fixed é a única trava confiável. A altura real vem do
        visualViewport via JS (teclado aberto encolhe o app, vídeo fica no topo). */
     html.modo-live{overflow:hidden;height:100%;overscroll-behavior:none}
-    body.modo-live{position:fixed;inset:0;width:100%;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+    /* 100svh = altura COM as barras do navegador abertas: nunca esconde o campo.
+       O JS (visualViewport) refina altura+posição, inclusive com teclado aberto. */
+    body.modo-live{position:fixed;top:0;left:0;width:100%;height:100vh;height:100svh;display:flex;flex-direction:column;overflow:hidden;will-change:transform}
+    body.modo-live .chat-input{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
     body.modo-live .sala,body.modo-live .grid,body.modo-live .stage{max-width:none;width:100%}
     /* iOS dá zoom automático em input com fonte <16px — mata o zoom. */
     body.modo-live .chat-input input{font-size:16px}
@@ -262,16 +265,21 @@
   if (aoVivo) {
     document.documentElement.classList.add("modo-live");
     document.body.classList.add("modo-live");
-    // iOS: altura do app segue o viewport VISUAL (teclado aberto = app encolhe,
-    // vídeo permanece pinado). scrollTo(0,0) desfaz o empurrão do Safari ao focar.
+    // Receita canônica mobile (YouTube/Twitch): o app COLA no viewport visual —
+    // altura = vv.height e deslocamento = vv.offsetTop. Teclado aberto: o app
+    // encolhe e acompanha o pan do navegador; vídeo fica no topo, campo acima
+    // do teclado. NUNCA brigar com scrollTo — o navegador vence.
     if (window.visualViewport && matchMedia("(max-width:900px)").matches) {
-      const ajustarAltura = function () {
-        document.body.style.height = Math.round(window.visualViewport.height) + "px";
-        window.scrollTo(0, 0);
+      const vv = window.visualViewport;
+      const colar = function () {
+        document.body.style.height = Math.round(vv.height) + "px";
+        document.body.style.transform = "translateY(" + Math.round(vv.offsetTop) + "px)";
       };
-      window.visualViewport.addEventListener("resize", ajustarAltura);
-      window.visualViewport.addEventListener("scroll", ajustarAltura);
-      ajustarAltura();
+      vv.addEventListener("resize", colar);
+      vv.addEventListener("scroll", colar);
+      window.addEventListener("orientationchange", function () { setTimeout(colar, 250); });
+      colar();
+      setTimeout(colar, 400); // as barras do iOS assentam depois do load
     }
     document.getElementById("viewers-chip").style.display = "inline-flex";
     document.getElementById("sala-titulo").textContent = cfg.webinar_name + " — aula ao vivo";
