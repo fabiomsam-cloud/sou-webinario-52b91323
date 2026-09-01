@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>SOU Webinário · Sala de Controle</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{--bg:#0b0f1a;--card:#121829;--line:#232c45;--txt:#eef1f8;--mut:#9aa4bf;--acc:#22c55e;--gold:#fbbf24;--red:#f87171;--blue:#60a5fa}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
+  .hide{display:none!important}
+  .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .login .box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:30px;width:100%;max-width:380px}
+  .login h1{font-size:1.15rem;margin-bottom:18px}
+  label{display:block;font-size:.8rem;font-weight:600;color:var(--mut);margin:12px 0 5px}
+  input,select{width:100%;background:#0d1322;border:1px solid var(--line);border-radius:9px;color:var(--txt);padding:10px 12px;font-size:.92rem;outline:none}
+  input:focus{border-color:var(--acc)}
+  .btn{background:var(--acc);border:none;border-radius:9px;color:#04120a;font-weight:800;padding:10px 16px;cursor:pointer;font-size:.85rem}
+  .btn.sec{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .btn.wa{background:#25D366}
+  .err{color:var(--red);font-size:.85rem;margin-top:10px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  header b{white-space:nowrap}
+  .who{color:var(--mut);font-size:.8rem}
+  .live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--acc);margin-right:6px;animation:p 1.4s infinite}
+  @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+  main{display:grid;grid-template-columns:400px 1fr;gap:14px;padding:14px 18px;max-width:1400px;margin:0 auto;align-items:start}
+  @media(max-width:900px){main{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .card h2{font-size:.85rem;padding:12px 16px;border-bottom:1px solid var(--line);color:var(--gold);display:flex;justify-content:space-between;align-items:center}
+  .card h2 span{color:var(--mut);font-weight:400;font-size:.75rem}
+  .lista{max-height:70vh;overflow-y:auto}
+  .item{padding:11px 16px;border-bottom:1px solid #1a2138;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .item:hover{background:#0f1526}
+  .item.on{background:#14203a}
+  .item .nm{font-weight:700;font-size:.87rem}
+  .item .dt{color:var(--mut);font-size:.72rem;margin-top:2px}
+  .badge{font-size:.65rem;font-weight:800;border-radius:99px;padding:2px 8px;white-space:nowrap}
+  .b-pitch{background:rgba(251,191,36,.15);color:var(--gold)}
+  .b-click{background:rgba(34,197,94,.2);color:var(--acc)}
+  .b-novo{background:rgba(248,113,113,.2);color:var(--red)}
+  .b-live{background:rgba(96,165,250,.15);color:var(--blue)}
+  /* thread */
+  .thread{display:flex;flex-direction:column;height:70vh}
+  .th-head{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .th-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .bal{max-width:75%;padding:9px 13px;border-radius:12px;font-size:.86rem;line-height:1.35}
+  .bal.lead{background:#0d1322;border:1px solid var(--line);align-self:flex-start}
+  .bal.staff{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);align-self:flex-end}
+  .bal small{display:block;color:var(--mut);font-size:.66rem;margin-top:4px}
+  .th-input{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+  .th-input input{flex:1}
+  .vazio{padding:40px;text-align:center;color:var(--mut);font-size:.9rem}
+</style>
+</head>
+<body>
+
+<div class="login" id="login">
+  <div class="box">
+    <h1>🎧 Sala de Controle — SOU Webinário</h1>
+    <label>E-mail</label><input id="l-email" type="email" autocomplete="username">
+    <label>Senha</label><input id="l-pass" type="password" autocomplete="current-password">
+    <br><br><button class="btn" id="l-btn" style="width:100%">ENTRAR</button>
+    <div class="err hide" id="l-err">Login inválido.</div>
+  </div>
+</div>
+
+<div id="app" class="hide">
+  <header>
+    <b>🎧 Sala de Controle</b>
+    <select id="sel-webinar" style="width:auto;min-width:180px"></select>
+    <span><span class="live-dot"></span><b id="qtd-online">0</b> <span class="who">na sala agora</span></span>
+    <span class="who" id="who"></span>
+    <button class="btn sec" id="btn-sair">Sair</button>
+  </header>
+  <main>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <h2>👀 Assistindo agora <span id="ao-vivo-info"></span></h2>
+        <div class="lista" id="online" style="max-height:34vh"></div>
+      </div>
+      <div class="card">
+        <h2>💬 Conversas <span>vermelho = aguardando resposta</span></h2>
+        <div class="lista" id="convs" style="max-height:34vh"></div>
+      </div>
+    </div>
+    <div class="card thread">
+      <div class="th-head">
+        <div><span class="nm" id="th-nome" style="font-weight:800">Selecione uma conversa</span>
+          <div class="dt who" id="th-info"></div></div>
+        <a id="th-wa" class="btn wa hide" target="_blank" rel="noopener">💬 Chamar no WhatsApp</a>
+      </div>
+      <div class="th-msgs" id="th-msgs"><div class="vazio">As mensagens do lead aparecem aqui.<br>Ele vê sua resposta dentro da sala, como se fosse ao vivo.</div></div>
+      <div class="th-input">
+        <input id="th-in" maxlength="800" placeholder="Responder como Equipe SOU…" disabled>
+        <button class="btn" id="th-btn" disabled>Enviar</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const SB_URL = "https://npdxyxunsdfoxwdjjfue.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZHh5eHVuc2Rmb3h3ZGpqZnVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMjk1MTgsImV4cCI6MjEwMzgwNTUxOH0.a4vyGpqBJi5UCtwCZsW5c-PFeUuUuO8eusCd2-nDq2k";
+const sb = supabase.createClient(SB_URL, SB_KEY);
+const $ = (id) => document.getElementById(id);
+
+let ME = null, WEBS = [], WID = null, LEAD = null, timers = [];
+function fmtT(s){s=s||0;const m=Math.floor(s/60),x=Math.floor(s%60);return m+"m"+String(x).padStart(2,"0")+"s";}
+function fmtH(iso){return iso?new Date(iso).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"";}
+function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML;}
+function waLink(phone,nome){
+  let p=(phone||"").replace(/\D/g,""); if(!p.startsWith("55")) p="55"+p;
+  const txt="Oi "+(nome||"").split(" ")[0]+"! Aqui é da equipe SOU — vi você na nossa aula agora 😉";
+  return "https://wa.me/"+p+"?text="+encodeURIComponent(txt);
+}
+
+// ---------- auth ----------
+$("l-btn").onclick = async () => {
+  $("l-err").classList.add("hide");
+  const { error } = await sb.auth.signInWithPassword({ email: $("l-email").value.trim(), password: $("l-pass").value });
+  if (error) { $("l-err").classList.remove("hide"); return; }
+  boot();
+};
+$("l-pass").addEventListener("keydown", e => { if (e.key === "Enter") $("l-btn").click(); });
+$("btn-sair").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+async function boot() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  const { data: me } = await sb.from("team_members").select("name, role").eq("user_id", user.id).maybeSingle();
+  if (!me) { alert("Sua conta não está na equipe."); await sb.auth.signOut(); return; }
+  ME = Object.assign({ user_id: user.id }, me);
+  $("who").textContent = me.name + " · " + me.role;
+  $("login").classList.add("hide"); $("app").classList.remove("hide");
+
+  const { data: webs } = await sb.from("vw_webinars_equipe").select("*").order("name");
+  WEBS = webs || [];
+  $("sel-webinar").innerHTML = WEBS.map(w => `<option value="${w.id}">${w.name}</option>`).join("");
+  WID = WEBS[0] && WEBS[0].id;
+
+  // Presença do atendente: alimenta a supressão da auto-resposta na sala do lead.
+  batida(); timers.push(setInterval(batida, 45000));
+  atualizar(); timers.push(setInterval(atualizar, 10000));
+}
+async function batida() {
+  await sb.from("team_presence").upsert({ user_id: ME.user_id, last_seen_at: new Date().toISOString() });
+}
+$("sel-webinar").onchange = e => { WID = e.target.value; LEAD = null; atualizar(); };
+
+// ---------- assistindo agora + conversas ----------
+async function atualizar() {
+  if (!WID) return;
+  const corte = new Date(Date.now() - 90000).toISOString();
+  const { data: ses } = await sb.from("sessions")
+    .select("id, lead_id, kind, max_position_seconds, last_seen_at, reached_pitch_at, clicked_offer_at, leads(name, phone)")
+    .eq("webinar_id", WID).gte("last_seen_at", corte)
+    .order("last_seen_at", { ascending: false }).limit(200);
+  const online = (ses || []).filter(s => s.lead_id);
+  $("qtd-online").textContent = online.length;
+  const wb = WEBS.find(w => w.id === WID) || {};
+  $("online").innerHTML = online.length ? online.map(s => {
+    const noPitch = wb.pitch_seconds && s.max_position_seconds >= wb.pitch_seconds;
+    return `<div class="item" data-lead="${s.lead_id}" data-nome="${esc(s.leads.name)}" data-fone="${esc(s.leads.phone)}">
+      <div><div class="nm">${esc(s.leads.name)}</div>
+        <div class="dt">no minuto ${fmtT(s.max_position_seconds)} · ${s.kind === "live" ? "ao vivo" : "replay"}</div></div>
+      <div>${s.clicked_offer_at ? '<span class="badge b-click">CLICOU</span>' : noPitch ? '<span class="badge b-pitch">NO PITCH</span>' : '<span class="badge b-live">' + Math.round(s.max_position_seconds / (wb.duration_seconds || 5400) * 100) + '%</span>'}</div>
+    </div>`;
+  }).join("") : '<div class="vazio">Ninguém na sala neste momento.</div>';
+
+  // Conversas: últimas mensagens do webinário, agrupadas por lead no cliente.
+  const { data: msgs } = await sb.from("chat_messages")
+    .select("lead_id, sender, message, created_at, leads(name, phone)")
+    .eq("webinar_id", WID).order("id", { ascending: false }).limit(400);
+  const porLead = new Map();
+  (msgs || []).forEach(m => {
+    if (!porLead.has(m.lead_id)) porLead.set(m.lead_id, { nome: m.leads.name, fone: m.leads.phone, ultima: m, aguardando: m.sender === "lead" });
+  });
+  const convs = [...porLead.entries()];
+  $("convs").innerHTML = convs.length ? convs.map(([lid, c]) =>
+    `<div class="item ${LEAD && LEAD.id === lid ? "on" : ""}" data-lead="${lid}" data-nome="${esc(c.nome)}" data-fone="${esc(c.fone)}">
+      <div><div class="nm">${esc(c.nome)}</div>
+        <div class="dt">${esc(c.ultima.message.slice(0, 48))} · ${fmtH(c.ultima.created_at)}</div></div>
+      ${c.aguardando ? '<span class="badge b-novo">RESPONDER</span>' : ""}
+    </div>`).join("") : '<div class="vazio">Nenhuma mensagem ainda.</div>';
+
+  document.querySelectorAll(".item[data-lead]").forEach(el => el.onclick = () =>
+    abrirThread(el.dataset.lead, el.dataset.nome, el.dataset.fone));
+  if (LEAD) carregarThread();
+}
+
+// ---------- thread ----------
+async function abrirThread(id, nome, fone) {
+  LEAD = { id, nome, fone };
+  $("th-nome").textContent = nome;
+  $("th-info").textContent = fone;
+  const wa = $("th-wa"); wa.classList.remove("hide"); wa.href = waLink(fone, nome);
+  $("th-in").disabled = false; $("th-btn").disabled = false;
+  carregarThread(true);
+}
+async function carregarThread(scroll) {
+  const { data: msgs } = await sb.from("chat_messages")
+    .select("sender, message, created_at, attendant_id")
+    .eq("lead_id", LEAD.id).eq("webinar_id", WID).order("id").limit(300);
+  const box = $("th-msgs");
+  const stick = scroll || box.scrollTop + box.clientHeight >= box.scrollHeight - 80;
+  box.innerHTML = (msgs || []).map(m =>
+    `<div class="bal ${m.sender === "lead" ? "lead" : "staff"}">${esc(m.message)}
+      <small>${m.sender === "lead" ? LEAD.nome.split(" ")[0] : m.sender === "sistema" ? "auto-resposta" : "Equipe SOU"} · ${fmtH(m.created_at)}</small></div>`).join("")
+    || '<div class="vazio">Sem mensagens deste lead.</div>';
+  if (stick) box.scrollTop = box.scrollHeight;
+}
+async function responder() {
+  const txt = $("th-in").value.trim();
+  if (!txt || !LEAD) return;
+  $("th-in").value = "";
+  // Sessão mais recente do lead, para vincular a resposta ao contexto certo.
+  const { data: s } = await sb.from("sessions").select("id").eq("lead_id", LEAD.id)
+    .order("started_at", { ascending: false }).limit(1).maybeSingle();
+  const { error } = await sb.from("chat_messages").insert({
+    webinar_id: WID, lead_id: LEAD.id, session_id: s ? s.id : null,
+    sender: "atendente", attendant_id: ME.user_id, message: txt,
+  });
+  if (error) { alert("Erro ao enviar: " + error.message); return; }
+  carregarThread(true);
+}
+$("th-btn").onclick = responder;
+$("th-in").addEventListener("keydown", e => { if (e.key === "Enter") responder(); });
+
+sb.auth.getSession().then(({ data }) => { if (data.session) boot(); });
+</script>
+</body>
+</html>
