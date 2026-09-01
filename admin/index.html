@@ -386,7 +386,11 @@ async function selecionar(id) {
   $("lk-replay").textContent = PAGE_BASE + "sala/?w=" + W.slug + "&pub=1";
   const { count } = await sb.from("chat_fake").select("id", { count: "exact", head: true }).eq("webinar_id", W.id);
   chatCount = count || 0;
-  $("chat-atual").textContent = chatCount ? chatCount + " mensagens carregadas." : "Nenhuma mensagem carregada ainda.";
+  $("chat-atual").textContent = chatCount ? chatCount + " mensagens carregadas — o roteiro completo está na caixa abaixo (edite e clique Substituir)." : "Nenhuma mensagem carregada ainda.";
+  const { data: cfRows } = await sb.from("chat_fake").select("at_seconds, author_name, message")
+    .eq("webinar_id", W.id).order("at_seconds").limit(1000);
+  $("chat-texto").value = (cfRows || []).map(r =>
+    fmtHMS(r.at_seconds) + " | " + r.author_name + " | " + r.message).join("\n");
   renderChecklist();
   if (!$("tab-dash").classList.contains("hide")) carregarDash();
   if (!$("tab-leads").classList.contains("hide")) carregarLeads();
