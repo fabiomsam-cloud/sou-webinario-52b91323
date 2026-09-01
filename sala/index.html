@@ -182,14 +182,19 @@
 <script src="../assets/app.js"></script>
 <script>
 (async function () {
-  // O WhatsApp pode entregar a querystring do botão percent-encoded
-  // ("w%3Dtjam%26t%3D…"): decodifica antes de ler os parâmetros.
+  // O WhatsApp mutila a querystring do botão de formas variadas (toda codificada,
+  // só o & codificado, etc.). Estratégia: decodifica sempre que houver sinal de
+  // mutilação; se ainda assim não achar, extrai por regex da URL crua.
   function qRobusto(name) {
     let s = location.search.slice(1);
-    if (s.indexOf("=") === -1 && s.indexOf("%3D") !== -1) {
+    if (s.indexOf("%3D") !== -1 || s.indexOf("%26") !== -1 ||
+        s.indexOf("%3d") !== -1 || s.indexOf("%26") !== -1) {
       try { s = decodeURIComponent(s); } catch (e) {}
     }
-    return new URLSearchParams(s).get(name);
+    const v = new URLSearchParams(s).get(name);
+    if (v) return v;
+    const mm = location.search.match(new RegExp("[?&%]" + name + "(?:%3[Dd]|=)([A-Za-z0-9-]+)"));
+    return mm ? mm[1] : null;
   }
   let slug = qRobusto("w");
   const pub = qRobusto("pub") === "1";
