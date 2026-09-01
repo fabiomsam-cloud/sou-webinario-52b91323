@@ -198,13 +198,23 @@
       (cfg.lead_name ? cfg.lead_name.split(" ")[0] + ", a " : "A ") + "aula \"" + cfg.webinar_name + "\" começa às " +
       new Date(cfg.scheduled_start_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
     document.title = "Começa em instantes — " + cfg.webinar_name;
-    let rest = cfg.seconds_remaining;
-    const tick = setInterval(function () {
-      rest--;
-      if (rest <= 0) { clearInterval(tick); location.reload(); return; }
+    // Contagem por RELÓGIO REAL: celular bloqueado congela timers; ao voltar,
+    // recalculamos do horário-alvo — e se já passou, entramos direto na sala.
+    const alvo = Date.parse(cfg.scheduled_start_at);
+    let entrou = false;
+    function tique() {
+      const rest = Math.ceil((alvo - Date.now()) / 1000);
+      if (rest <= 0) { if (!entrou) { entrou = true; location.reload(); } return; }
       document.getElementById("c-min").textContent = String(Math.floor(rest / 60)).padStart(2, "0");
       document.getElementById("c-seg").textContent = String(rest % 60).padStart(2, "0");
-    }, 1000);
+    }
+    tique();
+    setInterval(tique, 1000);
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") tique();
+    });
+    window.addEventListener("focus", tique);
+    window.addEventListener("pageshow", tique);
     return;
   }
 
@@ -217,11 +227,30 @@
   }
 
   // ---------- SALA ABERTA ----------
+  const aoVivo = cfg.kind === "live";
   document.getElementById("sala").style.display = "block";
-  document.getElementById("viewers-chip").style.display = "inline-flex";
-  document.getElementById("sala-titulo").textContent = cfg.webinar_name + " — aula ao vivo";
-  document.title = "🔴 " + cfg.webinar_name;
   const S = cfg.session_id;
+
+  if (aoVivo) {
+    document.getElementById("viewers-chip").style.display = "inline-flex";
+    document.getElementById("sala-titulo").textContent = cfg.webinar_name + " — aula ao vivo";
+    document.title = "🔴 " + cfg.webinar_name;
+  } else {
+    // MODO REPLAY: honesto — sem ao vivo, sem chat, sem contador; urgência real.
+    document.getElementById("sala-titulo").textContent = cfg.webinar_name + " — replay da aula";
+    document.title = "Replay — " + cfg.webinar_name;
+    const flag = document.querySelector(".flag-live");
+    if (flag) flag.innerHTML = "REPLAY · POR TEMPO LIMITADO";
+    document.querySelector(".chat").style.display = "none";
+    document.querySelector(".grid").style.gridTemplateColumns = "1fr";
+    const pill = document.querySelector(".pill-live");
+    if (pill) pill.innerHTML = "Gravação disponível por pouco tempo";
+    const aviso = document.createElement("div");
+    aviso.style.cssText = "margin:12px 2px 0;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:.85rem;line-height:1.45;color:var(--carbon)";
+    aviso.innerHTML = "⏳ <b>Esta aula já aconteceu.</b> Você está assistindo à gravação, que ficará no ar por pouco tempo — aproveite para ver até o final.";
+    const stage = document.querySelector(".stage");
+    stage.insertBefore(aviso, stage.querySelector(".watch-title"));
+  }
 
   // Player Vturb (padrão da casa: custom element + script async)
   const v = document.createElement("vturb-smartplayer");
@@ -281,7 +310,7 @@
     document.getElementById("qtd").textContent = n;
     document.getElementById("qtd2").textContent = n;
   }
-  atualizarQtd(); setInterval(atualizarQtd, 9000);
+  if (aoVivo) { atualizarQtd(); setInterval(atualizarQtd, 9000); }
 
   // ---------- chat (estilo live chat: avatar + nome colorido) ----------
   const msgs = document.getElementById("msgs");
@@ -316,7 +345,7 @@
 
   const fake = cfg.chat_fake || [];
   let fakeIdx = 0, primed = false;
-  setInterval(function () {
+  if (aoVivo) setInterval(function () {
     if (!curTime) return;
     if (!primed) {
       primed = true;
@@ -343,7 +372,7 @@
   }
   document.getElementById("msg-btn").addEventListener("click", enviar);
   inEl.addEventListener("keydown", function (e) { if (e.key === "Enter") enviar(); });
-  if (!token) {
+  if (!token || !aoVivo) {
     inEl.disabled = true; inEl.placeholder = "Chat disponível na aula ao vivo";
     document.getElementById("msg-btn").disabled = true;
   } else {
