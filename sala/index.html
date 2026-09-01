@@ -99,8 +99,14 @@
   /* ===== AO VIVO no mobile: vídeo PINADO no topo, só o chat rola =====
      (o teclado do celular encolhe o 100dvh — o vídeo permanece na tela) */
   @media(max-width:900px){
-    body.modo-live{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+    /* iOS ignora overflow:hidden no body para rolagem do documento —
+       body position:fixed é a única trava confiável. A altura real vem do
+       visualViewport via JS (teclado aberto encolhe o app, vídeo fica no topo). */
+    html.modo-live{overflow:hidden;height:100%;overscroll-behavior:none}
+    body.modo-live{position:fixed;inset:0;width:100%;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
     body.modo-live .sala,body.modo-live .grid,body.modo-live .stage{max-width:none;width:100%}
+    /* iOS dá zoom automático em input com fonte <16px — mata o zoom. */
+    body.modo-live .chat-input input{font-size:16px}
     body.modo-live .topbar{flex:none;padding:8px 12px;gap:8px}
     body.modo-live .wordmark{font-size:.86rem}
     body.modo-live .mark{width:28px;height:20px}
@@ -254,7 +260,19 @@
   const S = cfg.session_id;
 
   if (aoVivo) {
+    document.documentElement.classList.add("modo-live");
     document.body.classList.add("modo-live");
+    // iOS: altura do app segue o viewport VISUAL (teclado aberto = app encolhe,
+    // vídeo permanece pinado). scrollTo(0,0) desfaz o empurrão do Safari ao focar.
+    if (window.visualViewport && matchMedia("(max-width:900px)").matches) {
+      const ajustarAltura = function () {
+        document.body.style.height = Math.round(window.visualViewport.height) + "px";
+        window.scrollTo(0, 0);
+      };
+      window.visualViewport.addEventListener("resize", ajustarAltura);
+      window.visualViewport.addEventListener("scroll", ajustarAltura);
+      ajustarAltura();
+    }
     document.getElementById("viewers-chip").style.display = "inline-flex";
     document.getElementById("sala-titulo").textContent = cfg.webinar_name + " — aula ao vivo";
     document.title = "🔴 " + cfg.webinar_name;
