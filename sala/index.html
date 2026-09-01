@@ -193,7 +193,7 @@
   </div>
 </div>
 
-<div class="versao">v9</div>
+<div class="versao">v10</div>
 <script src="../assets/app.js"></script>
 <script>
 (async function () {
@@ -278,9 +278,14 @@
     if (window.visualViewport && matchMedia("(max-width:900px)").matches) {
       const vv = window.visualViewport;
       const colar = function () {
-        document.body.style.height = Math.round(vv.height) + "px";
+        // Chrome iOS desenha as barras POR CIMA do viewport reportado:
+        // vv.height chega maior que a área visível. innerHeight é o honesto lá;
+        // no Safari/Android os dois coincidem — o MENOR está sempre certo.
+        const altura = Math.min(window.innerHeight, Math.round(vv.height));
+        document.body.style.height = altura + "px";
         document.body.style.transform = "translateY(" + Math.round(vv.offsetTop) + "px)";
       };
+      window.addEventListener("resize", colar);
       vv.addEventListener("resize", colar);
       vv.addEventListener("scroll", colar);
       window.addEventListener("orientationchange", function () { setTimeout(colar, 250); });
