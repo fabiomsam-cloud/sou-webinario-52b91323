@@ -143,6 +143,7 @@
                 <textarea id="f-pixel_embed" spellcheck="false" style="min-height:90px" placeholder="<!-- Meta Pixel Code --> <script> !function(f,b,e,v,n,t,s)… fbq('init', '000000000000000'); …"></textarea>
                 <p class="muted" id="pixel-detect" style="margin:6px 0 10px">Nenhum pixel detectado ainda.</p></div>
               <div><label>Token CAPI (Conversions API — Gerenciador de Eventos → Configurações)</label><input id="f-meta_capi_token" type="password" placeholder="EAAB…"></div>
+              <div><label>Código de teste (aba Eventos de Teste — só durante validação; depois APAGUE)</label><input id="f-meta_test_event_code" placeholder="TEST12345"></div>
             </div>
           </div>
           <div class="card">
@@ -239,7 +240,7 @@ const PAGE_BASE = "https://fabiomsam-cloud.github.io/sou-webinario-52b91323/";
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 const $ = (id) => document.getElementById(id);
-const CAMPOS = ["name","slug","contest_code","checkout_url","offer_name","meta_capi_token","waiting_minutes","open_hour","close_hour","audience_peak"];
+const CAMPOS = ["name","slug","contest_code","checkout_url","offer_name","meta_capi_token","meta_test_event_code","waiting_minutes","open_hour","close_hour","audience_peak"];
 
 // Extrai o ID do código completo do Pixel (fbq('init','ID') ou tr?id=ID) — ou ID puro.
 function parsePixel(embed) {
