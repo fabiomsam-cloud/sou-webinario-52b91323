@@ -139,8 +139,10 @@
             <div class="grid2">
               <div><label>URL do checkout Hubla</label><input id="f-checkout_url"></div>
               <div><label>Nome exato da oferta (como falado no vídeo)</label><input id="f-offer_name"></div>
-              <div><label>Pixel Meta (ID)</label><input id="f-meta_pixel_id"></div>
-              <div><label>Token CAPI</label><input id="f-meta_capi_token" type="password" placeholder="EAAB…"></div>
+              <div style="grid-column:1/-1"><label>Código do Pixel da Meta — cole exatamente como a Meta entrega</label>
+                <textarea id="f-pixel_embed" spellcheck="false" style="min-height:90px" placeholder="<!-- Meta Pixel Code --> <script> !function(f,b,e,v,n,t,s)… fbq('init', '000000000000000'); …"></textarea>
+                <p class="muted" id="pixel-detect" style="margin:6px 0 10px">Nenhum pixel detectado ainda.</p></div>
+              <div><label>Token CAPI (Conversions API — Gerenciador de Eventos → Configurações)</label><input id="f-meta_capi_token" type="password" placeholder="EAAB…"></div>
             </div>
           </div>
           <div class="card">
@@ -237,7 +239,22 @@ const PAGE_BASE = "https://fabiomsam-cloud.github.io/sou-webinario-52b91323/";
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 const $ = (id) => document.getElementById(id);
-const CAMPOS = ["name","slug","contest_code","checkout_url","offer_name","meta_pixel_id","meta_capi_token","waiting_minutes","open_hour","close_hour","audience_peak"];
+const CAMPOS = ["name","slug","contest_code","checkout_url","offer_name","meta_capi_token","waiting_minutes","open_hour","close_hour","audience_peak"];
+
+// Extrai o ID do código completo do Pixel (fbq('init','ID') ou tr?id=ID) — ou ID puro.
+function parsePixel(embed) {
+  const t = String(embed || "").trim();
+  if (!t) return null;
+  if (/^\d{5,20}$/.test(t)) return t;
+  const m = t.match(/fbq\(\s*['"]init['"]\s*,\s*['"](\d{5,20})['"]/) || t.match(/[?&]id=(\d{5,20})/);
+  return m ? m[1] : NaN;
+}
+function pixelDetect() {
+  const v = parsePixel($("f-pixel_embed").value);
+  $("pixel-detect").textContent = v && !isNaN(v) ? "✔ Pixel detectado: " + v :
+    ($("f-pixel_embed").value.trim() ? "✘ Não reconheci — cole o código completo do Pixel da Meta." : "Nenhum pixel detectado ainda.");
+  return v;
+}
 const TEMPO = ["duration_seconds","pitch_seconds","offer_seconds","button_seconds"];
 
 // "1:07:30" → 4050 · "15:00" → 900 · "900" → 900 · inválido → null
@@ -350,6 +367,10 @@ async function selecionar(id) {
   W = webinars.find(w => w.id === id); if (!W) return;
   CAMPOS.forEach(c => { $("f-" + c).value = W[c] ?? ""; });
   TEMPO.forEach(c => { const el = $("f-" + c); el.value = fmtHMS(W[c]); atualizaHintTempo(el); });
+  $("f-pixel_embed").value = W.meta_pixel_id
+    ? "<!-- Meta Pixel Code -->\n<script>\n!function(f,b,e,v,n,t,s)\n{if(f.fbq)return;n=f.fbq=function(){n.callMethod?\nn.callMethod.apply(n,arguments):n.queue.push(arguments)};\nif(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';\nn.queue=[];t=b.createElement(e);t.async=!0;\nt.src=v;s=b.getElementsByTagName(e)[0];\ns.parentNode.insertBefore(t,s)}(window, document,'script',\n'https://connect.facebook.net/en_US/fbevents.js');\nfbq('init', '" + W.meta_pixel_id + "');\nfbq('track', 'PageView');\n<\/script>\n<!-- End Meta Pixel Code -->"
+    : "";
+  pixelDetect();
   $("f-vturb_embed").value = (W.vturb_player_id && W.vturb_player_id !== "PLACEHOLDER" && W.vturb_script_url)
     ? '<vturb-smartplayer id="vid-' + W.vturb_player_id + '" style="display: block; margin: 0 auto; width: 100%;">'
       + '<div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 56.25% 0 0; z-index: 0; background-color: black;"></div>'
@@ -409,6 +430,14 @@ $("btn-salvar").onclick = async () => {
       return;
     }
     upd[c] = v;
+  }
+  const pemb = $("f-pixel_embed").value.trim();
+  if (pemb) {
+    const pid = parsePixel(pemb);
+    if (!pid || isNaN(pid)) { alert("Código do Pixel da Meta não reconhecido — cole o bloco completo."); return; }
+    upd.meta_pixel_id = pid;
+  } else {
+    upd.meta_pixel_id = null;
   }
   const emb = $("f-vturb_embed").value.trim();
   if (emb) {
@@ -555,6 +584,7 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
 
 $("f-vturb_embed").addEventListener("input", vturbDetect);
 TEMPO.forEach(c => $("f-" + c).addEventListener("input", function () { atualizaHintTempo(this); }));
+$("f-pixel_embed").addEventListener("input", pixelDetect);
 
 sb.auth.getSession().then(({ data }) => { if (data.session) boot(); });
 </script>
