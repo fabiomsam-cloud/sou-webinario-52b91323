@@ -97,7 +97,10 @@
      (o teclado do celular encolhe o 100dvh — o vídeo permanece na tela) */
   @media(max-width:900px){
     body.modo-live{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
-    body.modo-live .topbar{flex:none;padding:8px 12px}
+    body.modo-live .topbar{flex:none;padding:8px 12px;gap:8px}
+    body.modo-live .wordmark{font-size:.86rem}
+    body.modo-live .mark{width:28px;height:20px}
+    body.modo-live .viewers{font-size:.72rem;padding:4px 10px;gap:5px}
     body.modo-live .sala{flex:1;min-height:0;padding:8px 10px;overflow:hidden}
     body.modo-live .grid{display:flex;flex-direction:column;height:100%;gap:8px}
     body.modo-live .stage{flex:none}
