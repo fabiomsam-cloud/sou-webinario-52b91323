@@ -60,8 +60,9 @@
   .kpi span{font-size:.72rem;color:var(--mut);letter-spacing:.04em}
   .funil .bar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:.82rem}
   .funil .bar span{width:150px;color:var(--mut);text-align:right;flex:none}
+  .funil .bar .trk{flex:1;background:#0d1322;border-radius:5px}
   .funil .bar i{display:block;height:22px;background:linear-gradient(90deg,var(--blue),var(--acc));border-radius:5px;min-width:2px}
-  .funil .bar b{flex:none}
+  .funil .bar b{flex:none;min-width:80px}
   svg{width:100%;height:auto;display:block}
   table{width:100%;border-collapse:collapse;font-size:.82rem}
   th{color:var(--mut);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-weight:600;white-space:nowrap}
@@ -414,7 +415,7 @@ async function carregarDash() {
   const max = Math.max(1, f.cadastros || 0);
   $("funil").innerHTML = steps.map(([k, l]) => {
     const v = f[k] || 0, pct = Math.round(v / max * 100);
-    return `<div class="bar"><span>${l}</span><i style="width:${Math.max(1, pct)}%"></i><b>${v} <em class="muted" style="font-style:normal">(${pct}%)</em></b></div>`;
+    return `<div class="bar"><span>${l}</span><div class="trk"><i style="width:${Math.max(1, pct)}%"></i></div><b>${v} <em class="muted" style="font-style:normal">(${pct}%)</em></b></div>`;
   }).join("");
 
   const { data: ab } = await sb.rpc("fn_admin_abandono", { p_webinar: W.id });
