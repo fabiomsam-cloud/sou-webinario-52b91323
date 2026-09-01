@@ -53,6 +53,7 @@
 
   /* ===== sala aberta — watch page ===== */
   .sala{display:none;max-width:1280px;margin:0 auto;padding:16px}
+  .sala.aberta{display:block} /* via classe — inline style mataria o flex do modo-live */
   .grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start}
   @media(max-width:960px){.grid{grid-template-columns:1fr;align-items:stretch}}
   .stage{position:relative}
@@ -191,7 +192,7 @@
   </div>
 </div>
 
-<div class="versao">v7</div>
+<div class="versao">v8</div>
 <script src="../assets/app.js"></script>
 <script>
 (async function () {
@@ -263,7 +264,7 @@
 
   // ---------- SALA ABERTA ----------
   const aoVivo = cfg.kind === "live";
-  document.getElementById("sala").style.display = "block";
+  document.getElementById("sala").classList.add("aberta");
   const S = cfg.session_id;
 
   if (aoVivo) {
