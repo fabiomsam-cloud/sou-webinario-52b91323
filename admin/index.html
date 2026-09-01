@@ -123,9 +123,10 @@
           </div>
           <div class="card">
             <h2>Vídeo (Vturb)</h2>
+            <label>Código de incorporação do Vturb — cole exatamente como o Vturb entrega</label>
+            <textarea id="f-vturb_embed" spellcheck="false" style="min-height:110px" placeholder='&lt;vturb-smartplayer id="vid-…"&gt;…&lt;/vturb-smartplayer&gt; &lt;script&gt;…player.js…&lt;/script&gt;'></textarea>
+            <p class="muted" id="vturb-detect" style="margin:6px 0 10px">Nenhum player detectado ainda.</p>
             <div class="grid2">
-              <div><label>ID do player Vturb</label><input id="f-vturb_player_id" placeholder="6a6279e9d94d…"></div>
-              <div><label>URL do script do player</label><input id="f-vturb_script_url" placeholder="https://scripts.converteai.net/…/v4/player.js"></div>
               <div><label>Duração total (segundos)</label><input id="f-duration_seconds" type="number"> <span class="muted" id="dur-fmt"></span></div>
               <div><label>Minuto do pitch (segundos)</label><input id="f-pitch_seconds" type="number"></div>
               <div><label>Minuto da oferta (segundos)</label><input id="f-offer_seconds" type="number"></div>
@@ -235,7 +236,23 @@ const PAGE_BASE = "https://fabiomsam-cloud.github.io/sou-webinario-52b91323/";
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 const $ = (id) => document.getElementById(id);
-const CAMPOS = ["name","slug","contest_code","vturb_player_id","vturb_script_url","duration_seconds","pitch_seconds","offer_seconds","button_seconds","checkout_url","offer_name","meta_pixel_id","meta_capi_token","waiting_minutes","open_hour","close_hour","audience_peak"];
+const CAMPOS = ["name","slug","contest_code","duration_seconds","pitch_seconds","offer_seconds","button_seconds","checkout_url","offer_name","meta_pixel_id","meta_capi_token","waiting_minutes","open_hour","close_hour","audience_peak"];
+
+// O Vturb entrega um bloco <vturb-smartplayer> + <script>; extraímos daqui o
+// id do player e a URL do player.js (é o que o banco guarda e a sala usa).
+function parseVturb(embed) {
+  const t = String(embed || "");
+  const id = (t.match(/vid-([A-Za-z0-9]+)/) || [])[1] || null;
+  const src = (t.match(/https:\/\/[^"'\s]+\/players\/[^"'\s]+\/player\.js/) || [])[0] || null;
+  return { id, src };
+}
+function vturbDetect() {
+  const { id, src } = parseVturb($("f-vturb_embed").value);
+  $("vturb-detect").textContent = id && src
+    ? "✔ Player detectado: " + id
+    : ($("f-vturb_embed").value.trim() ? "✘ Não reconheci o código — cole o bloco completo do Vturb." : "Nenhum player detectado ainda.");
+  return { id, src };
+}
 const NUMS = ["duration_seconds","pitch_seconds","offer_seconds","button_seconds","waiting_minutes","open_hour","close_hour","audience_peak"];
 
 // Checklist: 15 itens do spec. auto = derivado da config; manual = você marca.
@@ -306,6 +323,13 @@ $("btn-novo").onclick = async () => {
 async function selecionar(id) {
   W = webinars.find(w => w.id === id); if (!W) return;
   CAMPOS.forEach(c => { $("f-" + c).value = W[c] ?? ""; });
+  $("f-vturb_embed").value = (W.vturb_player_id && W.vturb_player_id !== "PLACEHOLDER" && W.vturb_script_url)
+    ? '<vturb-smartplayer id="vid-' + W.vturb_player_id + '" style="display: block; margin: 0 auto; width: 100%;">'
+      + '<div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 56.25% 0 0; z-index: 0; background-color: black;"></div>'
+      + '</vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="'
+      + W.vturb_script_url + '", s.async=!0,document.head.appendChild(s); <\/script>'
+    : "";
+  vturbDetect();
   $("f-qualification").value = JSON.stringify(W.qualification || [], null, 2);
   $("dur-fmt").textContent = W.duration_seconds ? "= " + fmtT(W.duration_seconds) : "";
   $("f-status-pill").textContent = W.status; $("f-status-pill").className = "pill " + W.status;
@@ -349,6 +373,14 @@ function renderChecklist() {
 $("btn-salvar").onclick = async () => {
   const upd = {};
   CAMPOS.forEach(c => { const v = $("f-" + c).value.trim(); upd[c] = v === "" ? null : (NUMS.includes(c) ? Number(v) : v); });
+  const emb = $("f-vturb_embed").value.trim();
+  if (emb) {
+    const { id, src } = parseVturb(emb);
+    if (!id || !src) { alert("Código do Vturb não reconhecido — cole o bloco completo, como o Vturb entrega."); return; }
+    upd.vturb_player_id = id; upd.vturb_script_url = src;
+  } else {
+    upd.vturb_player_id = null; upd.vturb_script_url = null;
+  }
   try { upd.qualification = JSON.parse($("f-qualification").value || "[]"); }
   catch (e) { alert("JSON das perguntas inválido: " + e.message); return; }
   const { error } = await sb.from("webinars").update(upd).eq("id", W.id);
@@ -483,6 +515,8 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   if (b.dataset.tab === "dash") carregarDash();
   if (b.dataset.tab === "leads") { pg = 0; carregarLeads(); }
 });
+
+$("f-vturb_embed").addEventListener("input", vturbDetect);
 
 sb.auth.getSession().then(({ data }) => { if (data.session) boot(); });
 </script>
