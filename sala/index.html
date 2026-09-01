@@ -114,15 +114,18 @@
     body.modo-live .wordmark{font-size:.86rem}
     body.modo-live .mark{width:28px;height:20px}
     body.modo-live .viewers{font-size:.72rem;padding:4px 10px;gap:5px}
-    body.modo-live .sala{flex:1;min-height:0;padding:8px 10px;overflow:hidden}
-    body.modo-live .grid{display:flex;flex-direction:column;align-items:stretch;height:100%;gap:8px}
+    /* Cadeia de altura SEM percentuais (height:100% dentro de flex colapsa no
+       Safari iOS): flex puro do body até o chat. */
+    body.modo-live .sala{flex:1 1 0;min-height:0;padding:8px 10px;overflow:hidden;display:flex;flex-direction:column}
+    body.modo-live .grid{flex:1 1 0;min-height:0;height:auto;display:flex;flex-direction:column;align-items:stretch;gap:8px}
     body.modo-live .chat{width:100%}
     body.modo-live .stage{flex:none}
     body.modo-live .glow{display:none}
     body.modo-live .watch-title{font-size:.92rem;margin:6px 2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     body.modo-live .watch-row{display:none}
-    body.modo-live .chat{flex:1;min-height:0;height:auto}
+    body.modo-live .chat{flex:1 1 0;min-height:120px;height:auto}
   }
+  .versao{position:fixed;left:6px;bottom:3px;font-size:9px;color:#c9c9c9;z-index:99;pointer-events:none;font-family:ui-monospace,monospace}
 </style>
 </head>
 <body>
@@ -188,6 +191,7 @@
   </div>
 </div>
 
+<div class="versao">v7</div>
 <script src="../assets/app.js"></script>
 <script>
 (async function () {
