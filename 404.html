@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Entrando na sala…</title>
+<style>
+  body{background:#fff;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center}
+  .spin{width:36px;height:36px;border:4px solid #E5E5E5;border-top-color:#FF0000;border-radius:50%;animation:g .8s linear infinite}
+  @keyframes g{to{transform:rotate(360deg)}}
+  p{color:#64748b}
+</style>
+</head>
+<body>
+  <div class="spin"></div>
+  <p id="txt">Entrando na sala…</p>
+<script>
+// Rede de segurança: o WhatsApp mutila URLs de botão de formas imprevisíveis
+// (às vezes codifica até o "?", virando um caminho que não existe → 404).
+// Esta página captura QUALQUER URL quebrada, pesca o token (32 hex) e o slug,
+// e despacha o lead para a sala. O token sobrevive a qualquer mutilação.
+(function () {
+  var raw = location.pathname + location.search + location.hash;
+  var dec = raw;
+  try { dec = decodeURIComponent(raw); } catch (e) {}
+  try { dec = decodeURIComponent(dec); } catch (e) {} // dupla codificação também
+  var alvo = raw + " " + dec;
+  var base = "/sou-webinario-52b91323/";
+
+  var t = alvo.match(/[?&=\/ %]t(?:%3[Dd]|=)?([a-f0-9]{32})/) || alvo.match(/([a-f0-9]{32})/);
+  var w = alvo.match(/w(?:%3[Dd]|=)([a-z0-9-]{2,30})/i);
+
+  if (t) {
+    location.replace(base + "sala/?" + (w ? "w=" + w[1] + "&" : "") + "t=" + t[1]);
+  } else if (/materiais/.test(alvo)) {
+    var pdf = dec.match(/materiais\/([A-Za-z0-9.\-]+\.pdf)/);
+    if (pdf) { location.replace(base + "materiais/" + pdf[1]); return; }
+    document.getElementById("txt").textContent = "Material não encontrado — fale com a Anne no WhatsApp que ela reenvia o link.";
+  } else if (w) {
+    location.replace(base + "?w=" + w[1]);
+  } else {
+    document.getElementById("txt").textContent = "Link não reconhecido — abra novamente pela mensagem do WhatsApp ou fale com a Anne.";
+  }
+})();
+</script>
+</body>
+</html>
