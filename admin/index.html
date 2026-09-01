@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>SOU Webinário · Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{--bg:#0b0f1a;--card:#121829;--line:#232c45;--txt:#eef1f8;--mut:#9aa4bf;--acc:#22c55e;--gold:#fbbf24;--red:#f87171;--blue:#60a5fa}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
+  .hide{display:none!important}
+  /* login */
+  .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .login .box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:30px;width:100%;max-width:380px}
+  .login h1{font-size:1.2rem;margin-bottom:18px}
+  label{display:block;font-size:.8rem;font-weight:600;color:var(--mut);margin:12px 0 5px}
+  input,select,textarea{width:100%;background:#0d1322;border:1px solid var(--line);border-radius:9px;color:var(--txt);padding:10px 12px;font-size:.92rem;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+  textarea{font-family:ui-monospace,Menlo,monospace;font-size:.8rem;min-height:140px}
+  .btn{background:var(--acc);border:none;border-radius:9px;color:#04120a;font-weight:800;padding:11px 18px;cursor:pointer;font-size:.9rem}
+  .btn.sec{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .btn.warn{background:var(--gold)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .err{color:var(--red);font-size:.85rem;margin-top:10px}
+  /* app */
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line)}
+  header b{font-size:1rem}
+  header .who{color:var(--mut);font-size:.8rem}
+  nav{display:flex;gap:6px;padding:12px 20px;flex-wrap:wrap}
+  nav button{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:999px;padding:8px 16px;cursor:pointer;font-size:.85rem;font-weight:600}
+  nav button.on{background:var(--acc);border-color:var(--acc);color:#04120a}
+  main{padding:10px 20px 60px;max-width:1180px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+  .card h2{font-size:.95rem;margin-bottom:14px;color:var(--gold)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 18px}
+  @media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .layout{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}}
+  /* checklist */
+  .chk{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.83rem}
+  .chk:last-child{border-bottom:none}
+  .chk .st{width:20px;flex:none;text-align:center}
+  .chk.ok .st{color:var(--acc)} .chk.no .st{color:var(--red)}
+  .chk input[type=checkbox]{width:auto}
+  .chk small{display:block;color:var(--mut);font-size:.72rem;margin-top:2px}
+  .prog{height:8px;background:#0d1322;border-radius:99px;overflow:hidden;margin:10px 0 14px}
+  .prog i{display:block;height:100%;background:var(--acc);transition:width .3s}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700}
+  .pill.rascunho{background:rgba(251,191,36,.15);color:var(--gold)}
+  .pill.publicado{background:rgba(34,197,94,.15);color:var(--acc)}
+  .pill.pausado{background:rgba(248,113,113,.15);color:var(--red)}
+  /* dashboard */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+  .kpi{background:#0d1322;border:1px solid var(--line);border-radius:12px;padding:14px}
+  .kpi b{display:block;font-size:1.5rem}
+  .kpi span{font-size:.72rem;color:var(--mut);letter-spacing:.04em}
+  .funil .bar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:.82rem}
+  .funil .bar span{width:150px;color:var(--mut);text-align:right;flex:none}
+  .funil .bar i{display:block;height:22px;background:linear-gradient(90deg,var(--blue),var(--acc));border-radius:5px;min-width:2px}
+  .funil .bar b{flex:none}
+  svg{width:100%;height:auto;display:block}
+  table{width:100%;border-collapse:collapse;font-size:.82rem}
+  th{color:var(--mut);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-weight:600;white-space:nowrap}
+  td{padding:8px 10px;border-bottom:1px solid #1a2138;white-space:nowrap}
+  .ok{color:var(--acc)} .no{color:var(--mut)}
+  .link-box{background:#0d1322;border:1px dashed var(--line);border-radius:9px;padding:9px 12px;font-family:ui-monospace,Menlo,monospace;font-size:.74rem;word-break:break-all;color:var(--blue);margin:6px 0;cursor:pointer}
+  .muted{color:var(--mut);font-size:.8rem}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--acc);color:#04120a;font-weight:700;padding:11px 22px;border-radius:99px;display:none;z-index:9}
+</style>
+</head>
+<body>
+
+<div class="login" id="login">
+  <div class="box">
+    <h1>🎬 SOU Webinário — Painel</h1>
+    <label>E-mail</label><input id="l-email" type="email" autocomplete="username">
+    <label>Senha</label><input id="l-pass" type="password" autocomplete="current-password">
+    <br><br><button class="btn" id="l-btn" style="width:100%">ENTRAR</button>
+    <div class="err hide" id="l-err">Login inválido.</div>
+  </div>
+</div>
+
+<div id="app" class="hide">
+  <header>
+    <b>🎬 SOU Webinário</b>
+    <div class="row">
+      <select id="sel-webinar" style="width:auto;min-width:200px"></select>
+      <button class="btn sec" id="btn-novo">+ Novo</button>
+      <span class="who" id="who"></span>
+      <button class="btn sec" id="btn-sair">Sair</button>
+    </div>
+  </header>
+  <nav>
+    <button data-tab="config" class="on">⚙️ Configuração</button>
+    <button data-tab="chat">💬 Chat fake</button>
+    <button data-tab="dash">📊 Dashboard</button>
+    <button data-tab="leads">👥 Leads</button>
+  </nav>
+  <main>
+
+    <!-- ===== CONFIG + CHECKLIST ===== -->
+    <section id="tab-config">
+      <div class="layout">
+        <div>
+          <div class="card">
+            <h2>Identidade</h2>
+            <div class="grid2">
+              <div><label>Nome</label><input id="f-name"></div>
+              <div><label>Slug (URL) — não mude depois de anunciar</label><input id="f-slug"></div>
+              <div><label>Código do concurso</label><input id="f-contest_code" placeholder="TJAM"></div>
+              <div><label>Status</label>
+                <div class="row"><span class="pill" id="f-status-pill"></span>
+                  <button class="btn" id="btn-publicar">Publicar</button>
+                  <button class="btn warn hide" id="btn-pausar">Pausar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Vídeo (Vturb)</h2>
+            <div class="grid2">
+              <div><label>ID do player Vturb</label><input id="f-vturb_player_id" placeholder="6a6279e9d94d…"></div>
+              <div><label>URL do script do player</label><input id="f-vturb_script_url" placeholder="https://scripts.converteai.net/…/v4/player.js"></div>
+              <div><label>Duração total (segundos)</label><input id="f-duration_seconds" type="number"> <span class="muted" id="dur-fmt"></span></div>
+              <div><label>Minuto do pitch (segundos)</label><input id="f-pitch_seconds" type="number"></div>
+              <div><label>Minuto da oferta (segundos)</label><input id="f-offer_seconds" type="number"></div>
+              <div><label>Minuto do botão no Vturb (segundos)</label><input id="f-button_seconds" type="number"></div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Oferta e Pixel</h2>
+            <div class="grid2">
+              <div><label>URL do checkout Hubla</label><input id="f-checkout_url"></div>
+              <div><label>Nome exato da oferta (como falado no vídeo)</label><input id="f-offer_name"></div>
+              <div><label>Pixel Meta (ID)</label><input id="f-meta_pixel_id"></div>
+              <div><label>Token CAPI</label><input id="f-meta_capi_token" type="password" placeholder="EAAB…"></div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Sessão e audiência</h2>
+            <div class="grid3">
+              <div><label>Sala de espera (min)</label><input id="f-waiting_minutes" type="number"></div>
+              <div><label>Sala abre (hora Manaus)</label><input id="f-open_hour" type="number" min="0" max="23"></div>
+              <div><label>Sala fecha (hora Manaus)</label><input id="f-close_hour" type="number" min="1" max="24"></div>
+              <div><label>Pico do contador de audiência</label><input id="f-audience_peak" type="number"></div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Perguntas qualificadoras (JSON)</h2>
+            <textarea id="f-qualification" spellcheck="false"></textarea>
+            <p class="muted" style="margin-top:6px">Cada pergunta: {id, label, type:"select", options:[{value, label, qualifies}]}. Só respostas com qualifies=true contam Lead no pixel.</p>
+          </div>
+          <div class="row">
+            <button class="btn" id="btn-salvar">💾 Salvar configuração</button>
+            <span class="muted" id="save-msg"></span>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <h2>Links deste webinário</h2>
+            <label>Página de cadastro (destino do anúncio)</label><div class="link-box" id="lk-cad"></div>
+            <label>Página-ponte (colar como URL do botão DENTRO do Vturb)</label><div class="link-box" id="lk-ponte"></div>
+            <label>Replay público (sem cadastro, sem tracking)</label><div class="link-box" id="lk-replay"></div>
+            <p class="muted">Clique em um link para copiar.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>✅ Checklist de configuração</h2>
+          <div class="prog"><i id="chk-prog" style="width:0"></i></div>
+          <div id="checklist"></div>
+          <p class="muted" style="margin-top:12px">O webinário só pode ser <b>publicado</b> com o checklist completo. Itens automáticos se marcam sozinhos ao salvar a configuração.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CHAT FAKE ===== -->
+    <section id="tab-chat" class="hide">
+      <div class="card">
+        <h2>Chat fake carregado</h2>
+        <p class="muted" id="chat-atual">—</p>
+      </div>
+      <div class="card">
+        <h2>Substituir roteiro do chat</h2>
+        <p class="muted" style="margin-bottom:8px">Uma mensagem por linha, no formato <b>MM:SS | Nome | mensagem</b> (aceita HH:MM:SS). Gere o roteiro com o Claude a partir da transcrição, revise e cole aqui.</p>
+        <textarea id="chat-texto" style="min-height:260px" placeholder="00:45 | Marcos Aurélio | Boa noite pessoal! Manaus presente 🙌&#10;01:12 | Renata Lima | primeira vez aqui, animada demais"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button class="btn sec" id="btn-chat-prev">Pré-visualizar</button>
+          <button class="btn" id="btn-chat-subir" disabled>⬆️ Substituir chat fake</button>
+          <span class="muted" id="chat-msg"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== DASHBOARD ===== -->
+    <section id="tab-dash" class="hide">
+      <div class="card"><h2>Funil</h2>
+        <div class="kpis" id="kpis"></div>
+        <div class="funil" id="funil" style="margin-top:16px"></div>
+      </div>
+      <div class="card"><h2>Retenção minuto a minuto (onde a aula perde as pessoas)</h2><div id="abandono"></div></div>
+      <div class="card"><h2>Cadastros e entradas por hora do dia (Manaus)</h2><div id="horarios"></div></div>
+    </section>
+
+    <!-- ===== LEADS ===== -->
+    <section id="tab-leads" class="hide">
+      <div class="card">
+        <div class="row" style="margin-bottom:12px">
+          <input id="busca" placeholder="Buscar nome, e-mail ou telefone…" style="max-width:320px">
+          <button class="btn sec" id="btn-buscar">Buscar</button>
+          <button class="btn sec" id="btn-csv">⬇️ CSV</button>
+          <span class="muted" id="leads-total"></span>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Qualif.</th><th>Cadastro</th><th>Assistiu até</th><th>Pitch</th><th>Clicou</th><th>Última atividade</th></tr></thead>
+          <tbody id="leads-tb"></tbody>
+        </table></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn sec" id="pg-ant">← Anteriores</button>
+          <button class="btn sec" id="pg-prox">Próximos →</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL = "https://npdxyxunsdfoxwdjjfue.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZHh5eHVuc2Rmb3h3ZGpqZnVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMjk1MTgsImV4cCI6MjEwMzgwNTUxOH0.a4vyGpqBJi5UCtwCZsW5c-PFeUuUuO8eusCd2-nDq2k";
+const PAGE_BASE = "https://fabiomsam-cloud.github.io/sou-webinario-52b91323/";
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+const $ = (id) => document.getElementById(id);
+const CAMPOS = ["name","slug","contest_code","vturb_player_id","vturb_script_url","duration_seconds","pitch_seconds","offer_seconds","button_seconds","checkout_url","offer_name","meta_pixel_id","meta_capi_token","waiting_minutes","open_hour","close_hour","audience_peak"];
+const NUMS = ["duration_seconds","pitch_seconds","offer_seconds","button_seconds","waiting_minutes","open_hour","close_hour","audience_peak"];
+
+// Checklist: 15 itens do spec. auto = derivado da config; manual = você marca.
+const CHECKLIST = [
+  { id:"vturb_player",   label:"1. Player Vturb (ID + script)",              auto: w => !!(w.vturb_player_id && w.vturb_script_url && w.vturb_player_id !== "PLACEHOLDER") },
+  { id:"duracao",        label:"2. Duração total do vídeo",                  auto: w => (w.duration_seconds||0) > 0 },
+  { id:"pitch",          label:"3. Minuto do pitch",                         auto: w => (w.pitch_seconds||0) > 0 },
+  { id:"oferta_botao",   label:"4. Minuto da oferta + do botão",             auto: w => (w.offer_seconds||0) > 0 && (w.button_seconds||0) > 0 },
+  { id:"url_botao",      label:"5. URL do botão no Vturb = página-ponte",    manual: true, hint:"Configure DENTRO do Vturb; nunca a Hubla direto." },
+  { id:"transcricao",    label:"6. Transcrição completa recebida",           manual: true, hint:"Insumo do roteiro do chat fake." },
+  { id:"chat_fake",      label:"7. Chat fake revisado e carregado",          autoAsync: true },
+  { id:"checkout",       label:"8. Checkout Hubla configurado",              auto: w => !!w.checkout_url && !w.checkout_url.includes("EXEMPLO") },
+  { id:"nome_oferta",    label:"9. Nome exato da oferta",                    auto: w => !!w.offer_name },
+  { id:"pixel",          label:"10. Pixel Meta + token CAPI",                auto: w => !!(w.meta_pixel_id && w.meta_capi_token) },
+  { id:"qualificacao",   label:"11. Perguntas qualificadoras",               auto: w => Array.isArray(w.qualification) && w.qualification.length > 0 },
+  { id:"contador",       label:"12. Pico do contador de audiência",          auto: w => (w.audience_peak||0) > 0 },
+  { id:"espera",         label:"13. Sala de espera + horários",              auto: w => (w.waiting_minutes||0) > 0 && w.open_hour != null && w.close_hour != null },
+  { id:"templates",      label:"14. 5 templates Meta aprovados (Anne)",      manual: true, hint:"Confirmação + 4 réguas comportamentais." },
+  { id:"agente_anne",    label:"15. Agente da Anne criado e vinculado",      manual: true, hint:"Ex.: webinario_tjam, com escada de precedência." },
+];
+
+let webinars = [], W = null, chatCount = 0, pg = 0;
+
+function toast(t) { const el = $("toast"); el.textContent = t; el.style.display = "block"; setTimeout(() => el.style.display = "none", 2200); }
+function fmtT(s) { s = s||0; const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h?h+"h":"") + String(m).padStart(2,"0") + "m" + String(x).padStart(2,"0") + "s"; }
+function fmtD(iso) { return iso ? new Date(iso).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—"; }
+
+// ---------- auth ----------
+$("l-btn").onclick = async () => {
+  $("l-err").classList.add("hide");
+  const { error } = await sb.auth.signInWithPassword({ email: $("l-email").value.trim(), password: $("l-pass").value });
+  if (error) { $("l-err").classList.remove("hide"); return; }
+  boot();
+};
+$("l-pass").addEventListener("keydown", e => { if (e.key === "Enter") $("l-btn").click(); });
+$("btn-sair").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+async function boot() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  const { data: me } = await sb.from("team_members").select("name, role").eq("user_id", user.id).maybeSingle();
+  if (!me) { alert("Sua conta não está na equipe."); await sb.auth.signOut(); return; }
+  if (me.role !== "admin") { alert("Acesso restrito: este painel é do administrador. A sala de controle dos atendentes fica em /controle/."); return; }
+  $("who").textContent = me.name + " · admin";
+  $("login").classList.add("hide"); $("app").classList.remove("hide");
+  await carregarWebinars();
+}
+
+// ---------- webinars ----------
+async function carregarWebinars(keep) {
+  const { data } = await sb.from("webinars").select("*").order("created_at");
+  webinars = data || [];
+  const sel = $("sel-webinar");
+  sel.innerHTML = webinars.map(w => `<option value="${w.id}">${w.name} (${w.status})</option>`).join("");
+  if (keep) sel.value = keep;
+  selecionar(sel.value || (webinars[0] && webinars[0].id));
+}
+$("sel-webinar").onchange = e => selecionar(e.target.value);
+$("btn-novo").onclick = async () => {
+  const name = prompt("Nome do webinário:"); if (!name) return;
+  const slug = prompt("Slug (URL, ex.: seducam):", name.toLowerCase().replace(/[^a-z0-9]+/g, "")); if (!slug) return;
+  const { data, error } = await sb.from("webinars").insert({ name, slug }).select().single();
+  if (error) { alert("Erro: " + error.message); return; }
+  await carregarWebinars(data.id);
+  toast("Webinário criado como rascunho");
+};
+
+async function selecionar(id) {
+  W = webinars.find(w => w.id === id); if (!W) return;
+  CAMPOS.forEach(c => { $("f-" + c).value = W[c] ?? ""; });
+  $("f-qualification").value = JSON.stringify(W.qualification || [], null, 2);
+  $("dur-fmt").textContent = W.duration_seconds ? "= " + fmtT(W.duration_seconds) : "";
+  $("f-status-pill").textContent = W.status; $("f-status-pill").className = "pill " + W.status;
+  $("btn-pausar").classList.toggle("hide", W.status !== "publicado");
+  $("lk-cad").textContent = PAGE_BASE + "?w=" + W.slug;
+  $("lk-ponte").textContent = PAGE_BASE + "ponte/?w=" + W.slug;
+  $("lk-replay").textContent = PAGE_BASE + "sala/?w=" + W.slug + "&pub=1";
+  const { count } = await sb.from("chat_fake").select("id", { count: "exact", head: true }).eq("webinar_id", W.id);
+  chatCount = count || 0;
+  $("chat-atual").textContent = chatCount ? chatCount + " mensagens carregadas." : "Nenhuma mensagem carregada ainda.";
+  renderChecklist();
+  if (!$("tab-dash").classList.contains("hide")) carregarDash();
+  if (!$("tab-leads").classList.contains("hide")) carregarLeads();
+}
+
+function renderChecklist() {
+  const box = $("checklist"); box.innerHTML = "";
+  let done = 0;
+  CHECKLIST.forEach(item => {
+    let ok;
+    if (item.manual) ok = W.checklist && W.checklist[item.id] === true;
+    else if (item.autoAsync) ok = chatCount > 0;
+    else ok = item.auto(W);
+    if (ok) done++;
+    const d = document.createElement("div");
+    d.className = "chk " + (ok ? "ok" : "no");
+    d.innerHTML = `<span class="st">${ok ? "✔" : "○"}</span><div style="flex:1">${item.label}${item.hint ? `<small>${item.hint}</small>` : ""}</div>` +
+      (item.manual ? `<input type="checkbox" data-chk="${item.id}" ${ok ? "checked" : ""}>` : "");
+    box.appendChild(d);
+  });
+  box.querySelectorAll("input[data-chk]").forEach(cb => cb.onchange = async () => {
+    const chk = Object.assign({}, W.checklist || {}); chk[cb.dataset.chk] = cb.checked;
+    const { error } = await sb.from("webinars").update({ checklist: chk }).eq("id", W.id);
+    if (!error) { W.checklist = chk; renderChecklist(); }
+  });
+  $("chk-prog").style.width = Math.round(done / CHECKLIST.length * 100) + "%";
+  $("btn-publicar").disabled = done < CHECKLIST.length || W.status === "publicado";
+  $("btn-publicar").textContent = W.status === "publicado" ? "Publicado ✔" : (done < CHECKLIST.length ? `Publicar (${done}/${CHECKLIST.length})` : "Publicar");
+}
+
+$("btn-salvar").onclick = async () => {
+  const upd = {};
+  CAMPOS.forEach(c => { const v = $("f-" + c).value.trim(); upd[c] = v === "" ? null : (NUMS.includes(c) ? Number(v) : v); });
+  try { upd.qualification = JSON.parse($("f-qualification").value || "[]"); }
+  catch (e) { alert("JSON das perguntas inválido: " + e.message); return; }
+  const { error } = await sb.from("webinars").update(upd).eq("id", W.id);
+  if (error) { alert("Erro ao salvar: " + error.message); return; }
+  toast("Configuração salva");
+  await carregarWebinars(W.id);
+};
+
+$("btn-publicar").onclick = async () => {
+  if (!confirm("Publicar este webinário? Ele passa a aceitar cadastros reais.")) return;
+  const { error } = await sb.from("webinars").update({ status: "publicado" }).eq("id", W.id);
+  if (!error) { toast("Publicado!"); carregarWebinars(W.id); }
+};
+$("btn-pausar").onclick = async () => {
+  if (!confirm("Pausar? Páginas deste webinário ficam indisponíveis.")) return;
+  const { error } = await sb.from("webinars").update({ status: "pausado" }).eq("id", W.id);
+  if (!error) { toast("Pausado"); carregarWebinars(W.id); }
+};
+
+document.querySelectorAll(".link-box").forEach(el => el.onclick = () => {
+  navigator.clipboard.writeText(el.textContent).then(() => toast("Link copiado"));
+});
+
+// ---------- chat fake ----------
+function parseChat(txt) {
+  const out = [], errs = [];
+  txt.split("\n").forEach((ln, i) => {
+    ln = ln.trim(); if (!ln) return;
+    const p = ln.split("|");
+    if (p.length < 3) { errs.push("linha " + (i + 1)); return; }
+    const t = p[0].trim().split(":").map(Number);
+    let sec = t.length === 3 ? t[0] * 3600 + t[1] * 60 + t[2] : t[0] * 60 + (t[1] || 0);
+    if (isNaN(sec)) { errs.push("linha " + (i + 1)); return; }
+    out.push({ at_seconds: sec, author_name: p[1].trim(), message: p.slice(2).join("|").trim() });
+  });
+  return { out, errs };
+}
+$("btn-chat-prev").onclick = () => {
+  const { out, errs } = parseChat($("chat-texto").value);
+  $("chat-msg").textContent = out.length + " mensagens válidas" + (errs.length ? " · ERROS em: " + errs.join(", ") : "");
+  $("btn-chat-subir").disabled = !out.length || !!errs.length;
+};
+$("btn-chat-subir").onclick = async () => {
+  const { out } = parseChat($("chat-texto").value);
+  if (!confirm("Substituir o chat fake atual (" + chatCount + " msgs) por " + out.length + " novas?")) return;
+  await sb.from("chat_fake").delete().eq("webinar_id", W.id);
+  const batch = "b" + Date.now();
+  for (let i = 0; i < out.length; i += 400) {
+    const chunk = out.slice(i, i + 400).map(m => Object.assign({ webinar_id: W.id, batch }, m));
+    const { error } = await sb.from("chat_fake").insert(chunk);
+    if (error) { alert("Erro no upload: " + error.message); return; }
+  }
+  toast(out.length + " mensagens carregadas");
+  selecionar(W.id);
+};
+
+// ---------- dashboard ----------
+async function carregarDash() {
+  const { data: f } = await sb.rpc("fn_admin_funil", { p_webinar: W.id });
+  if (!f) return;
+  const kpis = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram"],["pitch","Chegaram ao pitch"],["clicaram","Clicaram na oferta"],["cliques_anonimos","Cliques anônimos"],["replays_publicos","Replays públicos"]];
+  $("kpis").innerHTML = kpis.map(([k, l]) => `<div class="kpi"><b>${(f[k] ?? 0).toLocaleString("pt-BR")}</b><span>${l}</span></div>`).join("");
+  const steps = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram na sala"],["q25","25% do vídeo"],["q50","50%"],["q75","75%"],["pitch","Pitch"],["clicaram","Clicaram"]];
+  const max = Math.max(1, f.cadastros || 0);
+  $("funil").innerHTML = steps.map(([k, l]) => {
+    const v = f[k] || 0, pct = Math.round(v / max * 100);
+    return `<div class="bar"><span>${l}</span><i style="width:${Math.max(1, pct)}%"></i><b>${v} <em class="muted" style="font-style:normal">(${pct}%)</em></b></div>`;
+  }).join("");
+
+  const { data: ab } = await sb.rpc("fn_admin_abandono", { p_webinar: W.id });
+  desenharCurva($("abandono"), ab || [], d => d.m, d => d.n, "min");
+  const { data: hh } = await sb.rpc("fn_admin_horarios", { p_webinar: W.id });
+  desenharBarras($("horarios"), hh || []);
+}
+
+function desenharCurva(el, dados, fx, fy, unidade) {
+  if (!dados.length) { el.innerHTML = '<p class="muted">Sem dados ainda.</p>'; return; }
+  const W_ = 900, H_ = 220, pad = 34;
+  const maxY = Math.max(1, ...dados.map(fy)), maxX = Math.max(1, fx(dados[dados.length - 1]));
+  const pts = dados.map(d => (pad + fx(d) / maxX * (W_ - pad * 2)).toFixed(1) + "," + (H_ - pad - fy(d) / maxY * (H_ - pad * 2)).toFixed(1)).join(" ");
+  el.innerHTML = `<svg viewBox="0 0 ${W_} ${H_}">
+    <polyline points="${pts}" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+    <text x="${pad}" y="${H_ - 8}" fill="#9aa4bf" font-size="11">0 ${unidade}</text>
+    <text x="${W_ - pad - 40}" y="${H_ - 8}" fill="#9aa4bf" font-size="11">${maxX} ${unidade}</text>
+    <text x="4" y="${pad}" fill="#9aa4bf" font-size="11">${maxY}</text>
+  </svg>`;
+}
+
+function desenharBarras(el, dados) {
+  const maxV = Math.max(1, ...dados.map(d => Math.max(d.cadastros, d.entradas)));
+  el.innerHTML = '<div style="display:flex;align-items:flex-end;gap:4px;height:170px">' +
+    dados.map(d => `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%" title="${d.h}h — ${d.cadastros} cadastros, ${d.entradas} entradas">
+      <div style="background:#60a5fa;border-radius:3px 3px 0 0;height:${d.cadastros / maxV * 100}%"></div>
+      <div style="background:#22c55e;border-radius:3px 3px 0 0;height:${d.entradas / maxV * 100}%"></div>
+      <span class="muted" style="font-size:.6rem;text-align:center">${d.h}</span>
+    </div>`).join("") + '</div><p class="muted" style="margin-top:8px"><span style="color:#60a5fa">■</span> cadastros &nbsp; <span style="color:#22c55e">■</span> entradas</p>';
+}
+
+// ---------- leads ----------
+let leadsCache = [];
+async function carregarLeads() {
+  const { data } = await sb.rpc("fn_admin_leads", { p_webinar: W.id, p_busca: $("busca").value.trim() || null, p_lim: 50, p_off: pg * 50 });
+  if (!data) return;
+  leadsCache = data.rows || [];
+  $("leads-total").textContent = data.total + " leads · página " + (pg + 1);
+  const dur = W.duration_seconds || 0;
+  $("leads-tb").innerHTML = leadsCache.map(l => `<tr>
+    <td>${l.name}</td><td>${l.phone}</td><td>${l.email}</td>
+    <td>${l.qualified ? '<span class="ok">✔</span>' : '<span class="no">✘</span>'}</td>
+    <td>${fmtD(l.created_at)}</td>
+    <td>${fmtT(l.max_pos)}${dur ? " (" + Math.min(100, Math.round(l.max_pos / dur * 100)) + "%)" : ""}</td>
+    <td>${l.pitch ? '<span class="ok">✔</span>' : '<span class="no">—</span>'}</td>
+    <td>${l.clicou ? '<span class="ok">✔</span>' : '<span class="no">—</span>'}</td>
+    <td>${fmtD(l.ultima_atividade)}</td></tr>`).join("");
+}
+$("btn-buscar").onclick = () => { pg = 0; carregarLeads(); };
+$("busca").addEventListener("keydown", e => { if (e.key === "Enter") { pg = 0; carregarLeads(); } });
+$("pg-ant").onclick = () => { if (pg > 0) { pg--; carregarLeads(); } };
+$("pg-prox").onclick = () => { pg++; carregarLeads(); };
+$("btn-csv").onclick = () => {
+  const head = "nome;whatsapp;email;qualificado;cadastro;assistiu_seg;pitch;clicou\n";
+  const body = leadsCache.map(l => [l.name, l.phone, l.email, l.qualified, l.created_at, l.max_pos, l.pitch, l.clicou].join(";")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + head + body], { type: "text/csv" }));
+  a.download = "leads-" + W.slug + ".csv"; a.click();
+};
+
+// ---------- tabs ----------
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  ["config","chat","dash","leads"].forEach(t => $("tab-" + t).classList.toggle("hide", t !== b.dataset.tab));
+  if (b.dataset.tab === "dash") carregarDash();
+  if (b.dataset.tab === "leads") { pg = 0; carregarLeads(); }
+});
+
+sb.auth.getSession().then(({ data }) => { if (data.session) boot(); });
+</script>
+</body>
+</html>
