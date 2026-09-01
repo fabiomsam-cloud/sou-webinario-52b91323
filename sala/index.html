@@ -160,15 +160,27 @@
 <script src="../assets/app.js"></script>
 <script>
 (async function () {
-  const slug = SW.q("w");
-  const pub = SW.q("pub") === "1";
-  let token = SW.q("t") || SW.getToken(slug);
-  if (!slug) { document.getElementById("loading").textContent = "Link inválido."; return; }
+  // O WhatsApp pode entregar a querystring do botão percent-encoded
+  // ("w%3Dtjam%26t%3D…"): decodifica antes de ler os parâmetros.
+  function qRobusto(name) {
+    let s = location.search.slice(1);
+    if (s.indexOf("=") === -1 && s.indexOf("%3D") !== -1) {
+      try { s = decodeURIComponent(s); } catch (e) {}
+    }
+    return new URLSearchParams(s).get(name);
+  }
+  let slug = qRobusto("w");
+  const pub = qRobusto("pub") === "1";
+  let token = qRobusto("t") || qRobusto("k") || (slug ? SW.getToken(slug) : null);
+  if (!slug && !token) { document.getElementById("loading").textContent = "Link inválido."; return; }
   if (!token && !pub) { location.href = "../?w=" + encodeURIComponent(slug); return; }
-  if (token) SW.saveToken(slug, token);
 
-  const qs = pub ? "&pub=1" : "&t=" + encodeURIComponent(token);
-  const cfg = await SW.api("/sala?w=" + encodeURIComponent(slug) + qs);
+  // O token sozinho basta: a API resolve o webinário a partir dele.
+  const qs = (slug ? "w=" + encodeURIComponent(slug) : "") +
+             (pub ? "&pub=1" : "&t=" + encodeURIComponent(token));
+  const cfg = await SW.api("/sala?" + qs);
+  if (cfg.webinar_slug) slug = cfg.webinar_slug;
+  if (token && slug) SW.saveToken(slug, token);
 
   if (cfg.error) {
     document.getElementById("loading").textContent =
