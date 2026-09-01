@@ -379,7 +379,6 @@ async function selecionar(id) {
     : "";
   vturbDetect();
   $("f-qualification").value = JSON.stringify(W.qualification || [], null, 2);
-  $("dur-fmt").textContent = W.duration_seconds ? "= " + fmtT(W.duration_seconds) : "";
   $("f-status-pill").textContent = W.status; $("f-status-pill").className = "pill " + W.status;
   $("btn-pausar").classList.toggle("hide", W.status !== "publicado");
   $("lk-cad").textContent = PAGE_BASE + "?w=" + W.slug;
