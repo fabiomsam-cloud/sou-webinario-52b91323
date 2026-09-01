@@ -5,14 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
 <title>Abrindo sua matrícula…</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-  body{background:#0b0f1a;color:#eef1f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center}
-  .spin{width:44px;height:44px;border:4px solid #232c45;border-top-color:#22c55e;border-radius:50%;animation:g .8s linear infinite}
+  :root{--red:#FF0000;--magenta:#FF0050;--ink:#0F0F0F;--gray:#606060;--line:#E5E5E5}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#fff;color:var(--ink);font-family:'Roboto',Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center}
+  .mark{width:52px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--red),var(--magenta));display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(255,0,40,.35);animation:breathe 1.6s ease-in-out infinite}
+  .mark svg{width:16px;height:18px;fill:#fff;margin-left:2px}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+  .spin{width:36px;height:36px;border:4px solid var(--line);border-top-color:var(--red);border-radius:50%;animation:g .8s linear infinite}
   @keyframes g{to{transform:rotate(360deg)}}
-  a{display:none;background:#22c55e;color:#04120a;font-weight:800;padding:14px 26px;border-radius:12px;text-decoration:none}
+  p{font-weight:500;color:var(--gray)}
+  a{display:none;background:var(--red);color:#fff;font-weight:700;padding:14px 28px;border-radius:24px;text-decoration:none;box-shadow:0 6px 18px rgba(255,0,0,.25)}
 </style>
 </head>
 <body>
+  <div class="mark"><svg viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z"/></svg></div>
   <div class="spin"></div>
   <p id="txt">Abrindo sua matrícula…</p>
   <a id="fallback" href="#">IR PARA A MATRÍCULA</a>

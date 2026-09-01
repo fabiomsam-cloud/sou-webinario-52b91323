@@ -5,65 +5,131 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
 <title>Aula ao vivo — garanta sua vaga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0b0f1a; --card:#121829; --line:#232c45;
-    --txt:#eef1f8; --mut:#9aa4bf;
-    --acc:#22c55e; --acc2:#16a34a; --gold:#fbbf24;
+    --red:#FF0000; --magenta:#FF0050; --ink:#0F0F0F; --carbon:#282828;
+    --paper:#FFFFFF; --mist:#F2F2F2; --line:#E5E5E5; --gray:#606060; --soft:#FFF1F3;
   }
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px 48px}
-  .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#f87171;font-weight:700;font-size:.8rem;letter-spacing:.08em;padding:6px 14px;border-radius:999px;margin-bottom:18px}
-  .dot{width:8px;height:8px;border-radius:50%;background:#ef4444;animation:pulse 1.2s infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-  h1{font-size:clamp(1.5rem,5vw,2.2rem);text-align:center;max-width:640px;line-height:1.25;margin-bottom:10px}
-  h1 em{color:var(--gold);font-style:normal}
-  .sub{color:var(--mut);text-align:center;max-width:520px;margin-bottom:28px;font-size:1rem;line-height:1.5}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px 22px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
-  label{display:block;font-size:.85rem;font-weight:600;color:var(--mut);margin:14px 0 6px}
-  input,select{width:100%;background:#0d1322;border:1px solid var(--line);border-radius:10px;color:var(--txt);padding:13px 14px;font-size:1rem;outline:none;transition:border .15s}
-  input:focus,select:focus{border-color:var(--acc)}
-  button{width:100%;margin-top:22px;background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:12px;color:#04120a;font-size:1.05rem;font-weight:800;padding:16px;cursor:pointer;letter-spacing:.02em;transition:transform .1s,filter .15s}
-  button:hover{filter:brightness(1.08)}
-  button:active{transform:scale(.98)}
+  html{-webkit-font-smoothing:antialiased}
+  body{background:var(--paper);color:var(--ink);font-family:'Roboto',Arial,sans-serif;min-height:100vh}
+
+  /* topo estilo plataforma */
+  .topbar{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);z-index:5}
+  .mark{width:34px;height:24px;border-radius:7px;background:linear-gradient(135deg,var(--red),var(--magenta));display:flex;align-items:center;justify-content:center;flex:none}
+  .mark svg{width:11px;height:12px;fill:#fff;margin-left:1px}
+  .wordmark{font-weight:900;font-size:1.02rem;letter-spacing:-.03em;white-space:nowrap}
+  .wordmark span{color:var(--red)}
+  .live-chip{margin-left:auto;display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;font-weight:700;font-size:.72rem;letter-spacing:.06em;padding:5px 11px;border-radius:6px}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:pulse 1.3s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+  .wrap{max-width:960px;margin:0 auto;padding:22px 16px 60px}
+
+  /* "video card" hero */
+  .hero{animation:rise .5s ease both}
+  .thumb{position:relative;border-radius:14px;overflow:hidden;background:
+      radial-gradient(120% 160% at 85% 0%,#3a3a3a 0%,#161616 45%,#0a0a0a 100%);aspect-ratio:16/7.2;display:flex;align-items:center;justify-content:center}
+  .thumb::after{content:"";position:absolute;inset:0;background:
+      radial-gradient(60% 90% at 20% 110%,rgba(255,0,80,.35),transparent 60%),
+      radial-gradient(50% 80% at 95% 100%,rgba(255,0,0,.28),transparent 55%)}
+  .playbtn{position:relative;z-index:1;width:78px;height:54px;border-radius:14px;background:linear-gradient(135deg,var(--red),var(--magenta));display:flex;align-items:center;justify-content:center;box-shadow:0 12px 34px rgba(255,0,40,.45);animation:breathe 2.6s ease-in-out infinite}
+  .playbtn svg{width:22px;height:24px;fill:#fff;margin-left:3px}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  .badge-live{position:absolute;top:12px;left:12px;z-index:1;display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;font-weight:700;font-size:.7rem;letter-spacing:.08em;padding:4px 9px;border-radius:5px}
+  .badge-viewers{position:absolute;top:12px;right:12px;z-index:1;background:rgba(0,0,0,.72);color:#fff;font-size:.72rem;font-weight:500;padding:4px 9px;border-radius:5px}
+
+  .video-meta{display:flex;gap:12px;align-items:flex-start;padding:14px 4px 0}
+  .avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--magenta));color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex:none}
+  .v-title{font-weight:700;font-size:clamp(1.05rem,3.4vw,1.45rem);line-height:1.28;letter-spacing:-.01em}
+  .v-sub{color:var(--gray);font-size:.83rem;margin-top:4px}
+  .v-sub b{color:var(--ink);font-weight:500}
+  .chips{display:flex;gap:8px;margin:16px 0 4px;flex-wrap:wrap}
+  .chip{background:var(--mist);border-radius:8px;padding:6px 12px;font-size:.8rem;font-weight:500;color:var(--carbon)}
+  .chip.on{background:var(--ink);color:#fff}
+
+  /* formulário */
+  .panel{margin-top:18px;border:1px solid var(--line);border-radius:14px;overflow:hidden;animation:rise .5s .12s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .panel-head{background:var(--soft);padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .panel-head .n{width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;font-weight:700;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex:none}
+  .panel-head b{font-size:.95rem}
+  form{padding:18px}
+  label{display:block;font-size:.8rem;font-weight:500;color:var(--gray);margin:14px 0 6px}
+  label:first-child{margin-top:0}
+  input,select{width:100%;background:var(--paper);border:1px solid #ccc;border-radius:22px;color:var(--ink);padding:12px 18px;font-size:1rem;font-family:inherit;outline:none;transition:border .15s,box-shadow .15s}
+  input:focus,select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(255,0,0,.08)}
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23606060' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center}
+  button{width:100%;margin-top:20px;background:var(--red);border:none;border-radius:24px;color:#fff;font-size:1rem;font-family:inherit;font-weight:700;letter-spacing:.02em;padding:15px;cursor:pointer;transition:background .15s,transform .1s;box-shadow:0 6px 18px rgba(255,0,0,.25)}
+  button:hover{background:#e60000}
+  button:active{transform:scale(.985)}
   button:disabled{opacity:.6;cursor:wait}
-  .safe{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--mut);font-size:.78rem;margin-top:14px}
-  .err{color:#f87171;font-size:.85rem;margin-top:10px;display:none;text-align:center}
-  .loading{color:var(--mut);text-align:center;padding:40px 0}
+  .safe{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--gray);font-size:.76rem;margin-top:13px}
+  .err{color:var(--red);font-size:.85rem;margin-top:10px;display:none;text-align:center;font-weight:500}
+
+  /* skeleton */
+  .loading{padding:18px}
+  .sk{height:44px;border-radius:22px;background:linear-gradient(90deg,var(--mist) 25%,#e9e9e9 50%,var(--mist) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;margin-bottom:14px}
+  @keyframes shimmer{to{background-position:-200% 0}}
 </style>
 </head>
 <body>
-  <div class="badge"><span class="dot"></span> AULA AO VIVO</div>
-  <h1 id="titulo">Garanta sua vaga na <em>aula ao vivo</em></h1>
-  <p class="sub">Preencha seus dados abaixo para entrar na sala. As vagas da sessão são limitadas.</p>
+  <div class="topbar">
+    <div class="mark"><svg viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z"/></svg></div>
+    <div class="wordmark">Sou Concurseiro <span>e Vou Passar</span></div>
+    <div class="live-chip"><span class="live-dot"></span>AO VIVO</div>
+  </div>
 
-  <div class="card">
-    <div class="loading" id="loading">Carregando…</div>
-    <form id="form" style="display:none">
-      <label for="nome">Seu nome</label>
-      <input id="nome" type="text" autocomplete="name" required placeholder="Nome completo">
-      <label for="email">Seu melhor e-mail</label>
-      <input id="email" type="email" autocomplete="email" required placeholder="voce@email.com">
-      <label for="phone">Seu WhatsApp (com DDD)</label>
-      <input id="phone" type="tel" autocomplete="tel" required placeholder="(92) 99999-9999" inputmode="numeric">
-      <div id="perguntas"></div>
-      <button type="submit" id="btn">QUERO GARANTIR MINHA VAGA</button>
-      <div class="err" id="err">Não foi possível concluir. Confira os campos e tente de novo.</div>
-      <div class="safe">🔒 Seus dados estão seguros. Sem spam.</div>
-    </form>
+  <div class="wrap">
+    <div class="hero">
+      <div class="thumb">
+        <div class="badge-live"><span class="live-dot"></span>AO VIVO</div>
+        <div class="badge-viewers" id="hero-viewers">👁 aula em andamento</div>
+        <div class="playbtn"><svg viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z"/></svg></div>
+      </div>
+      <div class="video-meta">
+        <div class="avatar">F</div>
+        <div>
+          <div class="v-title" id="titulo">Garanta sua vaga na aula ao vivo</div>
+          <div class="v-sub"><b>Prof. Fábio Silva</b> · Sou Concurseiro e Vou Passar · vagas limitadas por sessão</div>
+        </div>
+      </div>
+      <div class="chips" id="chips">
+        <span class="chip on">Aula gratuita</span><span class="chip">Concursos</span><span class="chip">Método</span><span class="chip">Ao vivo</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><span class="n">1</span><b>Preencha para entrar na sala</b></div>
+      <div class="loading" id="loading"><div class="sk"></div><div class="sk"></div><div class="sk" style="width:70%"></div></div>
+      <form id="form" style="display:none">
+        <label for="nome">Seu nome</label>
+        <input id="nome" type="text" autocomplete="name" required placeholder="Nome completo">
+        <label for="email">Seu melhor e-mail</label>
+        <input id="email" type="email" autocomplete="email" required placeholder="voce@email.com">
+        <label for="phone">Seu WhatsApp (com DDD)</label>
+        <input id="phone" type="tel" autocomplete="tel" required placeholder="(92) 99999-9999" inputmode="numeric">
+        <div id="perguntas"></div>
+        <button type="submit" id="btn">GARANTIR MINHA VAGA</button>
+        <div class="err" id="err">Não foi possível concluir. Confira os campos e tente de novo.</div>
+        <div class="safe">🔒 Seus dados estão seguros. Sem spam.</div>
+      </form>
+    </div>
   </div>
 
 <script src="assets/app.js"></script>
 <script>
 (async function () {
   const slug = SW.q("w");
-  if (!slug) { document.getElementById("loading").textContent = "Link inválido."; return; }
+  if (!slug) { document.getElementById("loading").innerHTML = "Link inválido."; return; }
 
   const cfg = await SW.api("/cadastro?w=" + encodeURIComponent(slug));
-  if (cfg.error) { document.getElementById("loading").textContent = "Aula indisponível no momento."; return; }
+  if (cfg.error) { document.getElementById("loading").innerHTML = "Aula indisponível no momento."; return; }
 
-  document.getElementById("titulo").innerHTML =
-    'Garanta sua vaga: <em>' + cfg.name + '</em>';
+  document.getElementById("titulo").textContent = cfg.name + " — aula ao vivo com o Prof. Fábio";
   document.title = cfg.name + " — garanta sua vaga";
 
   // Pixel: PageView para todos; Lead SÓ quando o servidor aprovar a qualificação.
@@ -117,7 +183,6 @@
       if (!out.ok) throw new Error(out.error || "falha");
 
       SW.saveToken(slug, out.token);
-      // Lead deduplicado browser+CAPI: o servidor manda o event_id só p/ qualificado inédito.
       if (out.pixel && window.fbq) {
         fbq("track", "Lead", {}, { eventID: out.pixel.event_id });
       }
@@ -126,7 +191,7 @@
       }, out.pixel ? 400 : 0);
     } catch (e) {
       err.style.display = "block";
-      btn.disabled = false; btn.textContent = "QUERO GARANTIR MINHA VAGA";
+      btn.disabled = false; btn.textContent = "GARANTIR MINHA VAGA";
     }
   });
 })();
