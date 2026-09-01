@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <meta name="robots" content="noindex">
 <title>Sala da aula ao vivo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -92,6 +92,20 @@
 
   .loading{min-height:calc(100vh - 60px);display:flex;align-items:center;justify-content:center;color:var(--gray)}
   .fech-title{font-weight:900;font-size:clamp(1.4rem,5vw,2rem);letter-spacing:-.02em}
+
+  /* ===== AO VIVO no mobile: vídeo PINADO no topo, só o chat rola =====
+     (o teclado do celular encolhe o 100dvh — o vídeo permanece na tela) */
+  @media(max-width:900px){
+    body.modo-live{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+    body.modo-live .topbar{flex:none;padding:8px 12px}
+    body.modo-live .sala{flex:1;min-height:0;padding:8px 10px;overflow:hidden}
+    body.modo-live .grid{display:flex;flex-direction:column;height:100%;gap:8px}
+    body.modo-live .stage{flex:none}
+    body.modo-live .glow{display:none}
+    body.modo-live .watch-title{font-size:.92rem;margin:6px 2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    body.modo-live .watch-row{display:none}
+    body.modo-live .chat{flex:1;min-height:0;height:auto}
+  }
 </style>
 </head>
 <body>
@@ -232,6 +246,7 @@
   const S = cfg.session_id;
 
   if (aoVivo) {
+    document.body.classList.add("modo-live");
     document.getElementById("viewers-chip").style.display = "inline-flex";
     document.getElementById("sala-titulo").textContent = cfg.webinar_name + " — aula ao vivo";
     document.title = "🔴 " + cfg.webinar_name;
