@@ -209,6 +209,23 @@
 
     <!-- ===== DASHBOARD ===== -->
     <section id="tab-dash" class="hide">
+      <div class="card" style="padding:12px 16px">
+        <div class="row" id="dash-filtros">
+          <button class="btn" data-f="todos">Todos</button>
+          <button class="btn sec" data-f="hoje">Hoje</button>
+          <button class="btn sec" data-f="ontem">Ontem</button>
+          <button class="btn sec" data-f="7d">7 dias</button>
+          <button class="btn sec" data-f="30d">30 dias</button>
+          <button class="btn sec" data-f="mes">Este mês</button>
+          <button class="btn sec" data-f="pers">Personalizado</button>
+          <span id="pers-campos" class="hide">
+            <input type="date" id="f-dash-de" style="width:auto">
+            <input type="date" id="f-dash-ate" style="width:auto">
+            <button class="btn sec" id="btn-dash-aplicar">Aplicar</button>
+          </span>
+        </div>
+        <p class="muted" style="margin:8px 0 0">Dias-calendário de Manaus (corte à 00:00). O período segue o CADASTRO do lead: as sessões dos leads cadastrados no período contam mesmo que aconteçam depois. "Horas do dia" e cliques anônimos filtram pelo próprio horário do evento.</p>
+      </div>
       <div class="card"><h2>Funil</h2>
         <div class="kpis" id="kpis"></div>
         <div class="funil" id="funil" style="margin-top:16px"></div>
@@ -558,8 +575,44 @@ $("btn-chat-subir").onclick = async () => {
 };
 
 // ---------- dashboard ----------
+// Filtro de período: dias-calendário de Manaus (UTC-4 fixo, sem horário de verão).
+let dashDe = null, dashAte = null; // instantes UTC; ate EXCLUSIVO; null = sem corte
+const MAN_OFF = 4 * 3600e3;
+function manDia0(desloc = 0) { // 00:00 Manaus de (hoje + desloc dias), como Date UTC
+  const d = new Date(Date.now() - MAN_OFF);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + desloc) + MAN_OFF);
+}
+const manDiaStr = t => new Date(t.getTime() - MAN_OFF).toISOString().slice(0, 10);
+function aplicarFiltroDash(f) {
+  document.querySelectorAll("#dash-filtros [data-f]").forEach(b => b.classList.toggle("sec", b.dataset.f !== f));
+  $("pers-campos").classList.toggle("hide", f !== "pers");
+  if (f === "pers") return; // espera o Aplicar
+  const h0 = manDia0(0);
+  if (f === "todos") { dashDe = null; dashAte = null; }
+  else if (f === "hoje") { dashDe = h0; dashAte = null; }
+  else if (f === "ontem") { dashDe = manDia0(-1); dashAte = h0; }
+  else if (f === "7d") { dashDe = manDia0(-6); dashAte = null; }
+  else if (f === "30d") { dashDe = manDia0(-29); dashAte = null; }
+  else if (f === "mes") {
+    const d = new Date(Date.now() - MAN_OFF);
+    dashDe = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) + MAN_OFF); dashAte = null;
+  }
+  carregarDash();
+}
+document.querySelectorAll("#dash-filtros [data-f]").forEach(b => b.onclick = () => aplicarFiltroDash(b.dataset.f));
+$("btn-dash-aplicar").onclick = () => {
+  const de = $("f-dash-de").value, ate = $("f-dash-ate").value;
+  if (!de || !ate) { alert("Preencha as duas datas."); return; }
+  if (ate < de) { alert("Data final antes da inicial."); return; }
+  dashDe = new Date(de + "T00:00:00-04:00");
+  dashAte = new Date(new Date(ate + "T00:00:00-04:00").getTime() + 86400e3); // fim INCLUSIVO
+  carregarDash();
+};
+
 async function carregarDash() {
-  const { data: f } = await sb.rpc("fn_admin_funil", { p_webinar: W.id });
+  const pDe = dashDe ? dashDe.toISOString() : null;
+  const pAte = dashAte ? dashAte.toISOString() : null;
+  const { data: f } = await sb.rpc("fn_admin_funil", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   if (!f) return;
   const kpis = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram"],["pitch","Chegaram ao pitch"],["clicaram","Clicaram na oferta"],["cliques_anonimos","Cliques anônimos"],["replays_publicos","Replays públicos"]];
   $("kpis").innerHTML = kpis.map(([k, l]) => `<div class="kpi"><b>${(f[k] ?? 0).toLocaleString("pt-BR")}</b><span>${l}</span></div>`).join("");
@@ -570,14 +623,19 @@ async function carregarDash() {
     return `<div class="bar"><span>${l}</span><div class="trk"><i style="width:${Math.max(1, pct)}%"></i></div><b>${v} <em class="muted" style="font-style:normal">(${pct}%)</em></b></div>`;
   }).join("");
 
-  const { data: og } = await sb.rpc("fn_admin_origens", { p_webinar: W.id });
+  const { data: og } = await sb.rpc("fn_admin_origens", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   origCache = og || [];
   spendCache = [];
   renderOrigens();
   // Gasto/CPL da Meta (rota admin da edge function) — falha não derruba o card.
   try {
+    let qs = "/meta/spend?w=" + encodeURIComponent(W.slug);
+    if (dashDe) {
+      const fim = dashAte ? new Date(dashAte.getTime() - 86400e3) : manDia0(0);
+      qs += "&de=" + manDiaStr(dashDe) + "&ate=" + manDiaStr(fim);
+    }
     const { data: s } = await sb.auth.getSession();
-    const r = await fetch(FN_API + "/meta/spend?w=" + encodeURIComponent(W.slug), {
+    const r = await fetch(FN_API + qs, {
       headers: { "Authorization": "Bearer " + s.session.access_token, "apikey": SB_KEY },
     });
     const j = await r.json();
@@ -585,9 +643,9 @@ async function carregarDash() {
   } catch { /* sem gasto — colunas ficam em — */ }
   renderOrigens();
 
-  const { data: ab } = await sb.rpc("fn_admin_abandono", { p_webinar: W.id });
+  const { data: ab } = await sb.rpc("fn_admin_abandono", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   desenharCurva($("abandono"), ab || [], d => d.m, d => d.n, "min");
-  const { data: hh } = await sb.rpc("fn_admin_horarios", { p_webinar: W.id });
+  const { data: hh } = await sb.rpc("fn_admin_horarios", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   desenharBarras($("horarios"), hh || []);
 }
 
