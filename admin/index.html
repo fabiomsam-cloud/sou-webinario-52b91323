@@ -250,12 +250,43 @@
     <!-- ===== LEADS ===== -->
     <section id="tab-leads" class="hide">
       <div class="card">
+        <div class="row" style="margin-bottom:10px">
+          <select id="ld-periodo" style="width:auto">
+            <option value="todos">Período: todos</option>
+            <option value="hoje">Hoje</option>
+            <option value="ontem">Ontem</option>
+            <option value="7d">7 dias</option>
+            <option value="30d">30 dias</option>
+            <option value="mes">Este mês</option>
+            <option value="pers">Personalizado…</option>
+          </select>
+          <span id="ld-pers" class="hide">
+            <input type="date" id="ld-de" style="width:auto">
+            <input type="date" id="ld-ate" style="width:auto">
+          </span>
+          <select id="ld-qual" style="width:auto">
+            <option value="">Qualificação: todos</option>
+            <option value="sim">Só qualificados</option>
+            <option value="nao">Só desqualificados</option>
+          </select>
+          <select id="ld-eng" style="width:auto">
+            <option value="">Engajamento: todos</option>
+            <option value="entrou">Entrou na sala</option>
+            <option value="v50">Assistiu ≥ 50%</option>
+            <option value="v75">Assistiu ≥ 75%</option>
+            <option value="v90">Assistiu ≥ 90%</option>
+            <option value="pitch">Chegou ao pitch</option>
+            <option value="clicou">Clicou na oferta</option>
+            <option value="nao_entrou">Não entrou na sala</option>
+          </select>
+        </div>
         <div class="row" style="margin-bottom:12px">
           <input id="busca" placeholder="Buscar nome, e-mail ou telefone…" style="max-width:320px">
           <button class="btn sec" id="btn-buscar">Buscar</button>
-          <button class="btn sec" id="btn-csv">⬇️ CSV</button>
+          <button class="btn sec" id="btn-csv">⬇️ CSV (todos os filtrados)</button>
           <span class="muted" id="leads-total"></span>
         </div>
+        <p class="muted" style="margin:0 0 10px">Período pelo CADASTRO do lead (dias-calendário de Manaus). "Assistiu ≥ %" usa o ponto máximo alcançado no vídeo. O CSV exporta TODOS os leads do filtro, não só a página.</p>
         <div style="overflow-x:auto"><table>
           <thead><tr><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Qualif.</th><th>Cadastro</th><th>Assistiu até</th><th>Pitch</th><th>Clicou</th><th>Última atividade</th></tr></thead>
           <tbody id="leads-tb"></tbody>
@@ -724,8 +755,39 @@ function desenharBarras(el, dados) {
 
 // ---------- leads ----------
 let leadsCache = [];
+// Filtros da aba (período = CADASTRO do lead, dias-calendário de Manaus — mesmas regras do Dashboard)
+function leadsFiltros() {
+  const p = $("ld-periodo").value;
+  let de = null, ate = null;
+  const h0 = manDia0(0);
+  if (p === "hoje") de = h0;
+  else if (p === "ontem") { de = manDia0(-1); ate = h0; }
+  else if (p === "7d") de = manDia0(-6);
+  else if (p === "30d") de = manDia0(-29);
+  else if (p === "mes") {
+    const d = new Date(Date.now() - MAN_OFF);
+    de = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) + MAN_OFF);
+  } else if (p === "pers") {
+    if ($("ld-de").value) de = new Date($("ld-de").value + "T00:00:00-04:00");
+    if ($("ld-ate").value) ate = new Date(new Date($("ld-ate").value + "T00:00:00-04:00").getTime() + 86400e3); // fim inclusivo
+  }
+  const q = $("ld-qual").value;
+  return {
+    p_busca: $("busca").value.trim() || null,
+    p_de: de ? de.toISOString() : null,
+    p_ate: ate ? ate.toISOString() : null,
+    p_qual: q === "" ? null : q === "sim",
+    p_eng: $("ld-eng").value || null,
+  };
+}
+$("ld-periodo").onchange = () => {
+  $("ld-pers").classList.toggle("hide", $("ld-periodo").value !== "pers");
+  if ($("ld-periodo").value !== "pers") { pg = 0; carregarLeads(); }
+};
+for (const id of ["ld-qual", "ld-eng", "ld-de", "ld-ate"]) $(id).onchange = () => { pg = 0; carregarLeads(); };
+
 async function carregarLeads() {
-  const { data } = await sb.rpc("fn_admin_leads", { p_webinar: W.id, p_busca: $("busca").value.trim() || null, p_lim: 50, p_off: pg * 50 });
+  const { data } = await sb.rpc("fn_admin_leads", { p_webinar: W.id, ...leadsFiltros(), p_lim: 50, p_off: pg * 50 });
   if (!data) return;
   leadsCache = data.rows || [];
   $("leads-total").textContent = data.total + " leads · página " + (pg + 1);
@@ -743,12 +805,25 @@ $("btn-buscar").onclick = () => { pg = 0; carregarLeads(); };
 $("busca").addEventListener("keydown", e => { if (e.key === "Enter") { pg = 0; carregarLeads(); } });
 $("pg-ant").onclick = () => { if (pg > 0) { pg--; carregarLeads(); } };
 $("pg-prox").onclick = () => { pg++; carregarLeads(); };
-$("btn-csv").onclick = () => {
-  const head = "nome;whatsapp;email;qualificado;cadastro;assistiu_seg;pitch;clicou\n";
-  const body = leadsCache.map(l => [l.name, l.phone, l.email, l.qualified, l.created_at, l.max_pos, l.pitch, l.clicou].join(";")).join("\n");
+$("btn-csv").onclick = async () => {
+  // Exporta TODOS os leads do filtro atual (não só a página de 50).
+  const { data } = await sb.rpc("fn_admin_leads", { p_webinar: W.id, ...leadsFiltros(), p_lim: 100000, p_off: 0 });
+  const rows = (data && data.rows) || [];
+  if (!rows.length) { alert("Nenhum lead no filtro atual."); return; }
+  const dur = W.duration_seconds || 0;
+  const head = "nome;whatsapp;email;qualificado;cadastro;assistiu_seg;assistiu_pct;pitch;clicou;ultima_atividade\n";
+  const body = rows.map(l => [
+    l.name, l.phone, l.email, l.qualified, l.created_at, l.max_pos,
+    dur ? Math.min(100, Math.round(l.max_pos / dur * 100)) : "",
+    l.pitch, l.clicou, l.ultima_atividade || "",
+  ].join(";")).join("\n");
+  const partes = ["leads", W.slug];
+  if ($("ld-periodo").value !== "todos") partes.push($("ld-periodo").value);
+  if ($("ld-qual").value) partes.push($("ld-qual").value === "sim" ? "qualificados" : "desqualificados");
+  if ($("ld-eng").value) partes.push($("ld-eng").value);
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob(["﻿" + head + body], { type: "text/csv" }));
-  a.download = "leads-" + W.slug + ".csv"; a.click();
+  a.download = partes.join("-") + ".csv"; a.click();
 };
 
 // ---------- equipe ----------
