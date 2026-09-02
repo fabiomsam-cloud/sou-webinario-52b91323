@@ -212,6 +212,19 @@
         <div class="kpis" id="kpis"></div>
         <div class="funil" id="funil" style="margin-top:16px"></div>
       </div>
+      <div class="card"><h2>Funil por origem (UTM) — o que está trazendo lead qualificado</h2>
+        <div class="row" style="margin-bottom:10px" id="orig-visoes">
+          <button class="btn sec" data-visao="campanha">Campanha</button>
+          <button class="btn sec" data-visao="conjunto">Conjunto</button>
+          <button class="btn sec" data-visao="anuncio">Anúncio</button>
+          <button class="btn sec" data-visao="posicionamento">Posicionamento</button>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Origem</th><th>Cadastros</th><th>Qualif.</th><th>% qualif.</th><th>Entraram</th><th>50% do vídeo</th><th>Pitch</th><th>Clicaram</th><th>Comentaram</th></tr></thead>
+          <tbody id="orig-tb"></tbody>
+        </table></div>
+        <p class="muted" style="margin-top:8px">Origem vem dos parâmetros de UTM do anúncio (campanha = utm_campaign, conjunto = utm_content, anúncio = utm_term, posicionamento = utm_source). Gasto e CPL da Meta entram aqui assim que a conta SCVP - Tribunais liberar a permissão de leitura no token.</p>
+      </div>
       <div class="card"><h2>Retenção minuto a minuto (onde a aula perde as pessoas)</h2><div id="abandono"></div></div>
       <div class="card"><h2>Cadastros e entradas por hora do dia (Manaus)</h2><div id="horarios"></div></div>
     </section>
@@ -556,10 +569,45 @@ async function carregarDash() {
     return `<div class="bar"><span>${l}</span><div class="trk"><i style="width:${Math.max(1, pct)}%"></i></div><b>${v} <em class="muted" style="font-style:normal">(${pct}%)</em></b></div>`;
   }).join("");
 
+  const { data: og } = await sb.rpc("fn_admin_origens", { p_webinar: W.id });
+  origCache = og || [];
+  renderOrigens();
+
   const { data: ab } = await sb.rpc("fn_admin_abandono", { p_webinar: W.id });
   desenharCurva($("abandono"), ab || [], d => d.m, d => d.n, "min");
   const { data: hh } = await sb.rpc("fn_admin_horarios", { p_webinar: W.id });
   desenharBarras($("horarios"), hh || []);
+}
+
+// ---------- funil por origem (UTM) ----------
+let origCache = [], origVisao = "campanha";
+document.querySelectorAll("#orig-visoes button").forEach(b => b.onclick = () => { origVisao = b.dataset.visao; renderOrigens(); });
+
+function renderOrigens() {
+  document.querySelectorAll("#orig-visoes button").forEach(b =>
+    b.classList.toggle("sec", b.dataset.visao !== origVisao));
+  // Agrega o nível folha na visão escolhida (conjunto/anúncio mostram o pai junto).
+  const chave = r =>
+    origVisao === "campanha" ? r.campanha :
+    origVisao === "conjunto" ? r.campanha + " › " + r.conjunto :
+    origVisao === "anuncio" ? r.conjunto + " › " + r.anuncio :
+    r.posicionamento;
+  const por = {};
+  for (const r of origCache) {
+    const k = chave(r);
+    const a = por[k] ??= { cad: 0, qual: 0, entrou: 0, q50: 0, pitch: 0, clicou: 0, comentou: 0 };
+    for (const c of ["cad", "qual", "entrou", "q50", "pitch", "clicou", "comentou"]) a[c] += r[c];
+  }
+  const linhas = Object.entries(por).sort((a, b) => b[1].cad - a[1].cad);
+  const pct = (n, d) => d ? Math.round(n / d * 100) + "%" : "—";
+  $("orig-tb").innerHTML = linhas.map(([k, a]) => `<tr>
+    <td>${k}</td><td>${a.cad}</td><td>${a.qual}</td>
+    <td><b class="${a.cad && a.qual / a.cad >= .8 ? "ok" : "no"}">${pct(a.qual, a.cad)}</b></td>
+    <td>${a.entrou} <span class="muted">(${pct(a.entrou, a.qual)})</span></td>
+    <td>${a.q50}</td>
+    <td>${a.pitch} <span class="muted">(${pct(a.pitch, a.entrou)})</span></td>
+    <td>${a.clicou}</td><td>${a.comentou}</td></tr>`).join("")
+    || '<tr><td colspan="9" class="muted">Sem leads ainda.</td></tr>';
 }
 
 function desenharCurva(el, dados, fx, fy, unidade) {
