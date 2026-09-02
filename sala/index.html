@@ -32,8 +32,12 @@
   /* ===== estreia (espera) — idioma de "premiere" ===== */
   .premiere{width:100%;max-width:760px;animation:rise .5s ease both}
   @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-  .pre-screen{position:relative;border-radius:16px;overflow:hidden;aspect-ratio:16/8.2;background:
+  .pre-screen{position:relative;border-radius:16px;overflow:hidden;min-height:340px;padding:30px 18px;background:
       radial-gradient(120% 160% at 85% 0%,#3a3a3a 0%,#161616 45%,#0a0a0a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+  .micro{position:relative;z-index:1;margin-top:16px;min-height:2.8em;display:flex;align-items:center;text-align:center;max-width:560px;font-size:clamp(.98rem,2.9vw,1.18rem);font-weight:500;line-height:1.45;opacity:1;transition:opacity .45s ease}
+  .micro.saindo{opacity:0}
+  .premio{position:relative;z-index:1;margin-top:16px;max-height:30vh;max-width:78%;border-radius:10px;box-shadow:0 16px 44px rgba(0,0,0,.55);animation:flutua 3.4s ease-in-out infinite}
+  @keyframes flutua{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
   .pre-screen::after{content:"";position:absolute;inset:0;background:
       radial-gradient(60% 90% at 15% 110%,rgba(255,0,80,.35),transparent 60%),
       radial-gradient(50% 80% at 95% 100%,rgba(255,0,0,.3),transparent 55%)}
@@ -132,6 +136,8 @@
     <div class="pre-screen">
       <div class="pre-tag"><span class="rdot"></span>SUA VAGA ESTÁ CONFIRMADA</div>
       <div class="count"><span id="c-min">--</span><small>MIN</small><span id="c-seg">--</span><small>SEG</small></div>
+      <div class="micro" id="micro"></div>
+      <img id="premio" class="premio" style="display:none" alt="Material da aula">
       <div class="pre-hint">Você entrará automaticamente — fique nesta página.</div>
     </div>
     <div class="pre-meta">
@@ -242,6 +248,32 @@
     });
     window.addEventListener("focus", tique);
     window.addEventListener("pageshow", tique);
+
+    // Micro-mensagens dinâmicas: criam expectativa sem deixar o lead esfriar.
+    var micros = (Array.isArray(cfg.espera_mensagens) && cfg.espera_mensagens.length)
+      ? cfg.espera_mensagens.slice()
+      : ["Sua aula começa em instantes…",
+         "Pegue papel e caneta para anotar os pontos-chave ✍️",
+         "Fique até o final: tem material exclusivo para quem assiste tudo 🎁"];
+    if (cfg.lead_name) micros.unshift(cfg.lead_name.split(" ")[0] + ", sua vaga está garantida — respira que já vai começar 😉");
+    var mEl = document.getElementById("micro"), mi = 0;
+    function trocaMicro() {
+      mEl.classList.add("saindo");
+      setTimeout(function () {
+        mEl.textContent = micros[mi % micros.length];
+        mi++;
+        mEl.classList.remove("saindo");
+      }, 450);
+    }
+    mEl.textContent = micros[0]; mi = 1;
+    setInterval(trocaMicro, 6500);
+
+    // Prêmio visual (ex.: Vade Mecum): mostra o que o lead ganha ficando até o fim.
+    if (cfg.espera_imagem) {
+      var img = document.getElementById("premio");
+      img.src = cfg.espera_imagem;
+      img.style.display = "block";
+    }
     return;
   }
 
