@@ -91,6 +91,7 @@
     <div class="row">
       <select id="sel-webinar" style="width:auto;min-width:200px"></select>
       <button class="btn sec" id="btn-novo">+ Novo</button>
+      <a class="btn sec" href="../controle/" style="text-decoration:none">🎧 Sala de Controle</a>
       <span class="who" id="who"></span>
       <button class="btn sec" id="btn-sair">Sair</button>
     </div>
@@ -100,6 +101,7 @@
     <button data-tab="chat">💬 Chat fake</button>
     <button data-tab="dash">📊 Dashboard</button>
     <button data-tab="leads">👥 Leads</button>
+    <button data-tab="equipe">🧑‍💼 Equipe</button>
   </nav>
   <main>
 
@@ -231,6 +233,33 @@
           <button class="btn sec" id="pg-ant">← Anteriores</button>
           <button class="btn sec" id="pg-prox">Próximos →</button>
         </div>
+      </div>
+    </section>
+
+    <!-- ===== EQUIPE ===== -->
+    <section id="tab-equipe" class="hide">
+      <div class="card">
+        <h2>Acessos da equipe</h2>
+        <p class="muted" style="margin-bottom:10px">Admin: painel completo. Atendente: somente a Sala de Controle.</p>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Ações</th></tr></thead>
+          <tbody id="eq-tb"></tbody>
+        </table></div>
+      </div>
+      <div class="card">
+        <h2>Adicionar pessoa</h2>
+        <div class="grid3">
+          <div><label>Nome</label><input id="eq-nome" placeholder="Maria Souza"></div>
+          <div><label>E-mail (login)</label><input id="eq-email" type="email" placeholder="maria@grupo.com"></div>
+          <div><label>Papel</label><select id="eq-papel"><option value="atendente">Atendente (só Sala de Controle)</option><option value="admin">Admin (painel completo)</option></select></div>
+        </div>
+        <label>Senha (deixe vazio para gerar automaticamente)</label>
+        <input id="eq-senha" placeholder="mínimo 8 caracteres">
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="eq-criar">➕ Criar acesso</button>
+          <span class="muted" id="eq-msg"></span>
+        </div>
+        <div class="link-box hide" id="eq-cred" style="margin-top:10px"></div>
       </div>
     </section>
   </main>
@@ -585,12 +614,68 @@ $("btn-csv").onclick = () => {
   a.download = "leads-" + W.slug + ".csv"; a.click();
 };
 
+// ---------- equipe ----------
+const FN_API = SB_URL + "/functions/v1/sou-webinario";
+async function equipeApi(rota, body) {
+  const { data: s } = await sb.auth.getSession();
+  const r = await fetch(FN_API + rota, {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + s.session.access_token,
+               "apikey": SB_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
+  return r.json();
+}
+async function carregarEquipe() {
+  const { data: eu } = await sb.auth.getUser();
+  const { data: rows } = await sb.from("team_members").select("user_id,name,email,role").order("created_at");
+  $("eq-tb").innerHTML = (rows || []).map(r => `<tr>
+    <td>${r.name}</td><td>${r.email || "—"}</td>
+    <td>${r.role === "admin" ? "🛡 Admin" : "🎧 Atendente"}</td>
+    <td><button class="btn sec" data-acao="senha" data-id="${r.user_id}" data-nome="${r.name}">🔑 Nova senha</button>
+        ${r.user_id === eu.user.id ? "" : `<button class="btn sec" data-acao="remover" data-id="${r.user_id}" data-nome="${r.name}">🗑 Remover</button>`}</td>
+  </tr>`).join("");
+  $("eq-tb").querySelectorAll("button[data-acao]").forEach(btn => btn.onclick = async () => {
+    if (btn.dataset.acao === "remover") {
+      if (!confirm(`Remover o acesso de ${btn.dataset.nome}? O login deixa de funcionar na hora.`)) return;
+      const out = await equipeApi("/equipe/remover", { user_id: btn.dataset.id });
+      if (out.ok) { toast("Acesso removido"); carregarEquipe(); } else alert("Erro: " + out.error);
+    } else {
+      if (!confirm(`Gerar nova senha para ${btn.dataset.nome}?`)) return;
+      const out = await equipeApi("/equipe/senha", { user_id: btn.dataset.id });
+      if (out.ok) { mostrarCred(btn.dataset.nome, null, out.senha_gerada); }
+      else alert("Erro: " + out.error);
+    }
+  });
+}
+function mostrarCred(nome, email, senha) {
+  const box = $("eq-cred");
+  box.classList.remove("hide");
+  box.textContent = `Acesso de ${nome}${email ? " · login: " + email : ""} · senha: ${senha} — copie e envie com segurança (não será exibida de novo).`;
+}
+$("eq-criar").onclick = async () => {
+  const nome = $("eq-nome").value.trim(), email = $("eq-email").value.trim();
+  if (!nome || !email.includes("@")) { alert("Preencha nome e e-mail válidos."); return; }
+  $("eq-msg").textContent = "criando…";
+  const out = await equipeApi("/equipe/criar", {
+    nome, email, papel: $("eq-papel").value, senha: $("eq-senha").value.trim() || undefined,
+  });
+  $("eq-msg").textContent = "";
+  if (out.ok) {
+    toast("Acesso criado");
+    if (out.senha_gerada) mostrarCred(nome, email, out.senha_gerada);
+    $("eq-nome").value = ""; $("eq-email").value = ""; $("eq-senha").value = "";
+    carregarEquipe();
+  } else alert("Erro: " + out.error);
+};
+
 // ---------- tabs ----------
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
-  ["config","chat","dash","leads"].forEach(t => $("tab-" + t).classList.toggle("hide", t !== b.dataset.tab));
+  ["config","chat","dash","leads","equipe"].forEach(t => $("tab-" + t).classList.toggle("hide", t !== b.dataset.tab));
   if (b.dataset.tab === "dash") carregarDash();
   if (b.dataset.tab === "leads") { pg = 0; carregarLeads(); }
+  if (b.dataset.tab === "equipe") carregarEquipe();
 });
 
 $("f-vturb_embed").addEventListener("input", vturbDetect);
