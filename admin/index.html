@@ -243,6 +243,16 @@
         </table></div>
         <p class="muted" style="margin-top:8px">Origem vem dos parâmetros de UTM do anúncio (campanha = utm_campaign, conjunto = utm_content, anúncio = utm_term, posicionamento = utm_source). Gasto e CPL vêm direto da Meta pelas campanhas informadas na Config (campo "IDs das campanhas da Meta") e casam com os leads pelo NOME do conjunto/anúncio — renomear conjunto na Meta quebra o casamento com leads antigos. CPL qualif. = gasto ÷ leads qualificados.</p>
       </div>
+      <div class="card"><h2>🎬 Vídeo no player (fonte: Vturb)</h2>
+        <div class="kpis" id="vt-kpis"></div>
+        <div class="grid2" style="margin-top:16px">
+          <div style="overflow-x:auto" id="vt-dev"></div>
+          <div id="vt-cliques"></div>
+        </div>
+        <p style="margin:16px 0 4px"><b>Onde cada espectador parou o vídeo</b> <span class="muted">(histograma de abandono medido pelo próprio player)</span></p>
+        <div id="vt-curva"></div>
+        <p class="muted" style="margin-top:8px">Dados direto da API do Vturb para este player, no mesmo período do filtro. "Passaram do pitch" e cliques aqui são medidos pelo player — sirva de contraprova dos números da plataforma.</p>
+      </div>
       <div class="card"><h2>Retenção minuto a minuto (onde a aula perde as pessoas)</h2><div id="abandono"></div></div>
       <div class="card"><h2>Cadastros e entradas por hora do dia (Manaus)</h2><div id="horarios"></div></div>
     </section>
@@ -674,10 +684,57 @@ async function carregarDash() {
   } catch { /* sem gasto — colunas ficam em — */ }
   renderOrigens();
 
+  // Analytics do player (API do Vturb via edge function) — falha não derruba o card.
+  try {
+    let qv = "/vturb/stats?w=" + encodeURIComponent(W.slug);
+    if (dashDe) {
+      const fim = dashAte ? new Date(dashAte.getTime() - 86400e3) : manDia0(0);
+      qv += "&de=" + manDiaStr(dashDe) + "&ate=" + manDiaStr(fim);
+    }
+    const { data: s2 } = await sb.auth.getSession();
+    const rv = await fetch(FN_API + qv, {
+      headers: { "Authorization": "Bearer " + s2.session.access_token, "apikey": SB_KEY },
+    });
+    renderVturb(await rv.json());
+  } catch { renderVturb(null); }
+
   const { data: ab } = await sb.rpc("fn_admin_abandono", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   desenharCurva($("abandono"), ab || [], d => d.m, d => d.n, "min");
   const { data: hh } = await sb.rpc("fn_admin_horarios", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   desenharBarras($("horarios"), hh || []);
+}
+
+// ---------- analytics do player (Vturb) ----------
+function renderVturb(j) {
+  const s = j && j.stats;
+  if (!s) {
+    $("vt-kpis").innerHTML = '<p class="muted">Sem dados do Vturb para o período (player não configurado, chave ausente ou nenhum play).</p>';
+    $("vt-dev").innerHTML = ""; $("vt-cliques").innerHTML = ""; $("vt-curva").innerHTML = "";
+    return;
+  }
+  const fmtMin = t => Math.floor(t / 60) + "m" + String(Math.round(t % 60)).padStart(2, "0") + "s";
+  const kpis = [
+    [s.total_viewed_device_uniq ?? 0, "Espectadores únicos"],
+    [(s.play_rate ?? "—") + "%", "Play rate"],
+    [fmtMin((j.engajamento && j.engajamento.average_watched_time) || 0), "Tempo médio assistido"],
+    [(s.engagement_rate ?? "—") + "%", "Engajamento"],
+    [(s.total_over_pitch ?? 0) + " (" + (s.over_pitch_rate ?? 0) + "%)", "Passaram do pitch"],
+    [s.total_clicked_device_uniq ?? 0, "Cliques únicos no botão"],
+    [s.total_finished_device_uniq ?? 0, "Assistiram até o fim"],
+  ];
+  $("vt-kpis").innerHTML = kpis.map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join("");
+  const devs = (j.devices || []).slice().sort((a, b) => (b.total_viewed_device_uniq || 0) - (a.total_viewed_device_uniq || 0));
+  $("vt-dev").innerHTML = "<table><thead><tr><th>Dispositivo</th><th>Únicos</th><th>Play rate</th><th>Passou do pitch</th></tr></thead><tbody>" +
+    (devs.map(d => `<tr><td>${d.grouped_field || "?"}</td><td>${d.total_viewed_device_uniq ?? 0}</td><td>${d.play_rate ?? "—"}%</td><td>${d.over_pitch_rate ?? "—"}%</td></tr>`).join("")
+      || '<tr><td colspan="4" class="muted">—</td></tr>') + "</tbody></table>";
+  const fmtT2 = t => { t = Math.round(t); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), x = t % 60; return (h ? h + ":" : "") + String(m).padStart(2, "0") + ":" + String(x).padStart(2, "0"); };
+  const cl = j.cliques || [];
+  $("vt-cliques").innerHTML = "<b>Cliques ao longo do vídeo</b><p class='muted' style='margin:4px 0 8px'>Momento exato em que clicaram no botão.</p>" +
+    (cl.length ? cl.map(c => `<span style="display:inline-block;margin:0 10px 6px 0"><span class="muted">${fmtT2(c.timed)}</span> ×${c.total_users}</span>`).join("")
+      : '<span class="muted">Nenhum clique no período.</span>');
+  const g = ((j.engajamento && j.engajamento.grouped_timed) || []).slice().sort((a, b) => a.timed - b.timed);
+  if (g.length) desenharCurva($("vt-curva"), g.map(p => ({ m: Math.round(p.timed / 60), n: p.total_users })), d => d.m, d => d.n, "min");
+  else $("vt-curva").innerHTML = '<p class="muted">Sem dados ainda.</p>';
 }
 
 // ---------- funil por origem (UTM) ----------
