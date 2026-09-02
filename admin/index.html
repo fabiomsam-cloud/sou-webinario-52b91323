@@ -238,10 +238,10 @@
           <button class="btn sec" data-visao="posicionamento">Posicionamento</button>
         </div>
         <div style="overflow-x:auto"><table>
-          <thead><tr><th>Origem</th><th>Cadastros</th><th>Qualif.</th><th>% qualif.</th><th>Entraram</th><th>50% do vídeo</th><th>Pitch</th><th>Clicaram</th><th>Comentaram</th><th>Gasto</th><th>CPL qualif.</th></tr></thead>
+          <thead><tr><th>Origem</th><th>Cadastros</th><th>Qualif.</th><th>% qualif.</th><th>Entraram</th><th>50% do vídeo</th><th>Pitch</th><th>Clicaram</th><th>Comentaram</th><th>Matr. 🎓</th><th>Receita</th><th>Gasto</th><th>CPL qualif.</th><th>CAC / ROAS</th></tr></thead>
           <tbody id="orig-tb"></tbody>
         </table></div>
-        <p class="muted" style="margin-top:8px">Origem vem dos parâmetros de UTM do anúncio (campanha = utm_campaign, conjunto = utm_content, anúncio = utm_term, posicionamento = utm_source). Gasto e CPL vêm direto da Meta pelas campanhas informadas na Config (campo "IDs das campanhas da Meta") e casam com os leads pelo NOME do conjunto/anúncio — renomear conjunto na Meta quebra o casamento com leads antigos. CPL qualif. = gasto ÷ leads qualificados.</p>
+        <p class="muted" style="margin-top:8px">Origem vem dos parâmetros de UTM do anúncio (campanha = utm_campaign, conjunto = utm_content, anúncio = utm_term, posicionamento = utm_source). Gasto e CPL vêm direto da Meta pelas campanhas informadas na Config (campo "IDs das campanhas da Meta") e casam com os leads pelo NOME do conjunto/anúncio — renomear conjunto na Meta quebra o casamento com leads antigos. CPL qualif. = gasto ÷ leads qualificados. Matrículas chegam da Hubla (via Data Core, ciclo de 10 min); Receita é LÍQUIDA; CAC = gasto ÷ matrículas e ROAS = receita ÷ gasto.</p>
       </div>
       <div class="card"><h2>🎬 Vídeo no player (fonte: Vturb)</h2>
         <div class="kpis" id="vt-kpis"></div>
@@ -287,6 +287,7 @@
             <option value="v90">Assistiu ≥ 90%</option>
             <option value="pitch">Chegou ao pitch</option>
             <option value="clicou">Clicou na oferta</option>
+            <option value="matriculado">Matriculado 🎓</option>
             <option value="nao_entrou">Não entrou na sala</option>
           </select>
         </div>
@@ -298,7 +299,7 @@
         </div>
         <p class="muted" style="margin:0 0 10px">Período pelo CADASTRO do lead (dias-calendário de Manaus). "Assistiu ≥ %" usa o ponto máximo alcançado no vídeo. O CSV exporta TODOS os leads do filtro, não só a página.</p>
         <div style="overflow-x:auto"><table>
-          <thead><tr><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Qualif.</th><th>Cadastro</th><th>Assistiu até</th><th>Pitch</th><th>Clicou</th><th>Última atividade</th></tr></thead>
+          <thead><tr><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Qualif.</th><th>Cadastro</th><th>Assistiu até</th><th>Pitch</th><th>Clicou</th><th>Matrícula 🎓</th><th>Última atividade</th></tr></thead>
           <tbody id="leads-tb"></tbody>
         </table></div>
         <div class="row" style="margin-top:12px">
@@ -655,9 +656,12 @@ async function carregarDash() {
   const pAte = dashAte ? dashAte.toISOString() : null;
   const { data: f } = await sb.rpc("fn_admin_funil", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   if (!f) return;
-  const kpis = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram"],["pitch","Chegaram ao pitch"],["clicaram","Clicaram na oferta"],["cliques_anonimos","Cliques anônimos"],["replays_publicos","Replays públicos"]];
-  $("kpis").innerHTML = kpis.map(([k, l]) => `<div class="kpi"><b>${(f[k] ?? 0).toLocaleString("pt-BR")}</b><span>${l}</span></div>`).join("");
-  const steps = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram na sala"],["q25","25% do vídeo"],["q50","50%"],["q75","75%"],["pitch","Pitch"],["clicaram","Clicaram"]];
+  const kpis = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram"],["pitch","Chegaram ao pitch"],["clicaram","Clicaram na oferta"],["matriculas","Matrículas 🎓"],["receita","Receita (líq.)"],["cliques_anonimos","Cliques anônimos"],["replays_publicos","Replays públicos"]];
+  $("kpis").innerHTML = kpis.map(([k, l]) => {
+    const v = k === "receita" ? "R$ " + Number(f[k] ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : (f[k] ?? 0).toLocaleString("pt-BR");
+    return `<div class="kpi"><b>${v}</b><span>${l}</span></div>`;
+  }).join("");
+  const steps = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram na sala"],["q25","25% do vídeo"],["q50","50%"],["q75","75%"],["pitch","Pitch"],["clicaram","Clicaram"],["matriculas","Matricularam 🎓"]];
   const max = Math.max(1, f.cadastros || 0);
   $("funil").innerHTML = steps.map(([k, l]) => {
     const v = f[k] || 0, pct = Math.round(v / max * 100);
@@ -761,8 +765,8 @@ function renderOrigens() {
   const por = {};
   for (const r of origCache) {
     const k = chave(r);
-    const a = por[k] ??= { cad: 0, qual: 0, entrou: 0, q50: 0, pitch: 0, clicou: 0, comentou: 0, conjs: new Set(), ads: new Set() };
-    for (const c of ["cad", "qual", "entrou", "q50", "pitch", "clicou", "comentou"]) a[c] += r[c];
+    const a = por[k] ??= { cad: 0, qual: 0, entrou: 0, q50: 0, pitch: 0, clicou: 0, comentou: 0, matriculas: 0, receita: 0, conjs: new Set(), ads: new Set() };
+    for (const c of ["cad", "qual", "entrou", "q50", "pitch", "clicou", "comentou", "matriculas", "receita"]) a[c] += Number(r[c] || 0);
     a.conjs.add(norm(r.conjunto));
     a.ads.add(norm(r.conjunto) + "›" + norm(r.anuncio));
   }
@@ -775,6 +779,9 @@ function renderOrigens() {
     else for (const cj of a.conjs) gasto += spendConj[cj] || 0;
     if (origVisao === "posicionamento") gasto = 0; // gasto não se divide por posicionamento
     const cpl = gasto && a.qual ? reais(gasto / a.qual) : "—";
+    const cacRoas = gasto && a.matriculas
+      ? reais(gasto / a.matriculas) + ' <span class="muted">/ ' + (a.receita / gasto).toFixed(1).replace(".", ",") + "x</span>"
+      : "—";
     return `<tr>
     <td>${k}</td><td>${a.cad}</td><td>${a.qual}</td>
     <td><b class="${a.cad && a.qual / a.cad >= .8 ? "ok" : "no"}">${pct(a.qual, a.cad)}</b></td>
@@ -782,9 +789,11 @@ function renderOrigens() {
     <td>${a.q50}</td>
     <td>${a.pitch} <span class="muted">(${pct(a.pitch, a.entrou)})</span></td>
     <td>${a.clicou}</td><td>${a.comentou}</td>
-    <td>${gasto ? reais(gasto) : "—"}</td><td><b>${cpl}</b></td></tr>`;
+    <td><b class="${a.matriculas ? "ok" : ""}">${a.matriculas || "—"}</b></td>
+    <td>${a.receita ? reais(a.receita) : "—"}</td>
+    <td>${gasto ? reais(gasto) : "—"}</td><td><b>${cpl}</b></td><td>${cacRoas}</td></tr>`;
   }).join("")
-    || '<tr><td colspan="11" class="muted">Sem leads ainda.</td></tr>';
+    || '<tr><td colspan="14" class="muted">Sem leads ainda.</td></tr>';
 }
 
 function desenharCurva(el, dados, fx, fy, unidade) {
@@ -856,6 +865,7 @@ async function carregarLeads() {
     <td>${fmtT(l.max_pos)}${dur ? " (" + Math.min(100, Math.round(l.max_pos / dur * 100)) + "%)" : ""}</td>
     <td>${l.pitch ? '<span class="ok">✔</span>' : '<span class="no">—</span>'}</td>
     <td>${l.clicou ? '<span class="ok">✔</span>' : '<span class="no">—</span>'}</td>
+    <td>${l.matriculado_at ? '<span class="ok">🎓 ' + (l.matricula_valor ? "R$ " + Number(l.matricula_valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "✔") + '</span>' : '<span class="no">—</span>'}</td>
     <td>${fmtD(l.ultima_atividade)}</td></tr>`).join("");
 }
 $("btn-buscar").onclick = () => { pg = 0; carregarLeads(); };
@@ -868,11 +878,11 @@ $("btn-csv").onclick = async () => {
   const rows = (data && data.rows) || [];
   if (!rows.length) { alert("Nenhum lead no filtro atual."); return; }
   const dur = W.duration_seconds || 0;
-  const head = "nome;whatsapp;email;qualificado;cadastro;assistiu_seg;assistiu_pct;pitch;clicou;ultima_atividade\n";
+  const head = "nome;whatsapp;email;qualificado;cadastro;assistiu_seg;assistiu_pct;pitch;clicou;matriculado_em;matricula_valor;ultima_atividade\n";
   const body = rows.map(l => [
     l.name, l.phone, l.email, l.qualified, l.created_at, l.max_pos,
     dur ? Math.min(100, Math.round(l.max_pos / dur * 100)) : "",
-    l.pitch, l.clicou, l.ultima_atividade || "",
+    l.pitch, l.clicou, l.matriculado_at || "", l.matricula_valor || "", l.ultima_atividade || "",
   ].join(";")).join("\n");
   const partes = ["leads", W.slug];
   if ($("ld-periodo").value !== "todos") partes.push($("ld-periodo").value);
