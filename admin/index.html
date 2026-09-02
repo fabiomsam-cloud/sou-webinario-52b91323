@@ -146,6 +146,7 @@
                 <p class="muted" id="pixel-detect" style="margin:6px 0 10px">Nenhum pixel detectado ainda.</p></div>
               <div><label>Token CAPI (Conversions API — Gerenciador de Eventos → Configurações)</label><input id="f-meta_capi_token" type="password" placeholder="EAAB…"></div>
               <div><label>Código de teste (aba Eventos de Teste — só durante validação; depois APAGUE)</label><input id="f-meta_test_event_code" placeholder="TEST12345"></div>
+              <div><label>IDs das campanhas da Meta (separe por vírgula — liga gasto e CPL no Dashboard)</label><input id="f-meta_campaign_ids" placeholder="52663255118028"></div>
             </div>
           </div>
           <div class="card">
@@ -220,10 +221,10 @@
           <button class="btn sec" data-visao="posicionamento">Posicionamento</button>
         </div>
         <div style="overflow-x:auto"><table>
-          <thead><tr><th>Origem</th><th>Cadastros</th><th>Qualif.</th><th>% qualif.</th><th>Entraram</th><th>50% do vídeo</th><th>Pitch</th><th>Clicaram</th><th>Comentaram</th></tr></thead>
+          <thead><tr><th>Origem</th><th>Cadastros</th><th>Qualif.</th><th>% qualif.</th><th>Entraram</th><th>50% do vídeo</th><th>Pitch</th><th>Clicaram</th><th>Comentaram</th><th>Gasto</th><th>CPL qualif.</th></tr></thead>
           <tbody id="orig-tb"></tbody>
         </table></div>
-        <p class="muted" style="margin-top:8px">Origem vem dos parâmetros de UTM do anúncio (campanha = utm_campaign, conjunto = utm_content, anúncio = utm_term, posicionamento = utm_source). Gasto e CPL da Meta entram aqui assim que a conta SCVP - Tribunais liberar a permissão de leitura no token.</p>
+        <p class="muted" style="margin-top:8px">Origem vem dos parâmetros de UTM do anúncio (campanha = utm_campaign, conjunto = utm_content, anúncio = utm_term, posicionamento = utm_source). Gasto e CPL vêm direto da Meta pelas campanhas informadas na Config (campo "IDs das campanhas da Meta") e casam com os leads pelo NOME do conjunto/anúncio — renomear conjunto na Meta quebra o casamento com leads antigos. CPL qualif. = gasto ÷ leads qualificados.</p>
       </div>
       <div class="card"><h2>Retenção minuto a minuto (onde a aula perde as pessoas)</h2><div id="abandono"></div></div>
       <div class="card"><h2>Cadastros e entradas por hora do dia (Manaus)</h2><div id="horarios"></div></div>
@@ -286,7 +287,7 @@ const PAGE_BASE = "https://fabiomsam-cloud.github.io/sou-webinario-52b91323/";
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 const $ = (id) => document.getElementById(id);
-const CAMPOS = ["name","slug","contest_code","checkout_url","offer_name","meta_capi_token","meta_test_event_code","waiting_minutes","open_hour","close_hour","audience_peak","espera_imagem"];
+const CAMPOS = ["name","slug","contest_code","checkout_url","offer_name","meta_capi_token","meta_test_event_code","meta_campaign_ids","waiting_minutes","open_hour","close_hour","audience_peak","espera_imagem"];
 
 // Extrai o ID do código completo do Pixel (fbq('init','ID') ou tr?id=ID) — ou ID puro.
 function parsePixel(embed) {
@@ -571,6 +572,17 @@ async function carregarDash() {
 
   const { data: og } = await sb.rpc("fn_admin_origens", { p_webinar: W.id });
   origCache = og || [];
+  spendCache = [];
+  renderOrigens();
+  // Gasto/CPL da Meta (rota admin da edge function) — falha não derruba o card.
+  try {
+    const { data: s } = await sb.auth.getSession();
+    const r = await fetch(FN_API + "/meta/spend?w=" + encodeURIComponent(W.slug), {
+      headers: { "Authorization": "Bearer " + s.session.access_token, "apikey": SB_KEY },
+    });
+    const j = await r.json();
+    spendCache = j.rows || [];
+  } catch { /* sem gasto — colunas ficam em — */ }
   renderOrigens();
 
   const { data: ab } = await sb.rpc("fn_admin_abandono", { p_webinar: W.id });
@@ -580,7 +592,7 @@ async function carregarDash() {
 }
 
 // ---------- funil por origem (UTM) ----------
-let origCache = [], origVisao = "campanha";
+let origCache = [], spendCache = [], origVisao = "campanha";
 document.querySelectorAll("#orig-visoes button").forEach(b => b.onclick = () => { origVisao = b.dataset.visao; renderOrigens(); });
 
 function renderOrigens() {
@@ -592,22 +604,41 @@ function renderOrigens() {
     origVisao === "conjunto" ? r.campanha + " › " + r.conjunto :
     origVisao === "anuncio" ? r.conjunto + " › " + r.anuncio :
     r.posicionamento;
+  const norm = s => (s || "").trim().toLowerCase();
+  // Gasto por conjunto/anúncio (nomes da Meta ↔ utm_content/utm_term dos leads)
+  const spendConj = {}, spendAd = {};
+  for (const s of spendCache) {
+    spendConj[norm(s.conjunto)] = (spendConj[norm(s.conjunto)] || 0) + s.gasto;
+    const ka = norm(s.conjunto) + "›" + norm(s.anuncio);
+    spendAd[ka] = (spendAd[ka] || 0) + s.gasto;
+  }
   const por = {};
   for (const r of origCache) {
     const k = chave(r);
-    const a = por[k] ??= { cad: 0, qual: 0, entrou: 0, q50: 0, pitch: 0, clicou: 0, comentou: 0 };
+    const a = por[k] ??= { cad: 0, qual: 0, entrou: 0, q50: 0, pitch: 0, clicou: 0, comentou: 0, conjs: new Set(), ads: new Set() };
     for (const c of ["cad", "qual", "entrou", "q50", "pitch", "clicou", "comentou"]) a[c] += r[c];
+    a.conjs.add(norm(r.conjunto));
+    a.ads.add(norm(r.conjunto) + "›" + norm(r.anuncio));
   }
   const linhas = Object.entries(por).sort((a, b) => b[1].cad - a[1].cad);
   const pct = (n, d) => d ? Math.round(n / d * 100) + "%" : "—";
-  $("orig-tb").innerHTML = linhas.map(([k, a]) => `<tr>
+  const reais = v => "R$ " + v.toFixed(2).replace(".", ",");
+  $("orig-tb").innerHTML = linhas.map(([k, a]) => {
+    let gasto = 0;
+    if (origVisao === "anuncio") for (const ad of a.ads) gasto += spendAd[ad] || 0;
+    else for (const cj of a.conjs) gasto += spendConj[cj] || 0;
+    if (origVisao === "posicionamento") gasto = 0; // gasto não se divide por posicionamento
+    const cpl = gasto && a.qual ? reais(gasto / a.qual) : "—";
+    return `<tr>
     <td>${k}</td><td>${a.cad}</td><td>${a.qual}</td>
     <td><b class="${a.cad && a.qual / a.cad >= .8 ? "ok" : "no"}">${pct(a.qual, a.cad)}</b></td>
     <td>${a.entrou} <span class="muted">(${pct(a.entrou, a.qual)})</span></td>
     <td>${a.q50}</td>
     <td>${a.pitch} <span class="muted">(${pct(a.pitch, a.entrou)})</span></td>
-    <td>${a.clicou}</td><td>${a.comentou}</td></tr>`).join("")
-    || '<tr><td colspan="9" class="muted">Sem leads ainda.</td></tr>';
+    <td>${a.clicou}</td><td>${a.comentou}</td>
+    <td>${gasto ? reais(gasto) : "—"}</td><td><b>${cpl}</b></td></tr>`;
+  }).join("")
+    || '<tr><td colspan="11" class="muted">Sem leads ainda.</td></tr>';
 }
 
 function desenharCurva(el, dados, fx, fy, unidade) {
