@@ -230,6 +230,9 @@
         <div class="kpis" id="kpis"></div>
         <div class="funil" id="funil" style="margin-top:16px"></div>
       </div>
+      <div class="card"><h2>🎓 Matriculados — quem comprou, de onde veio e como pagou</h2>
+        <div style="overflow-x:auto"><div id="matriculados"></div></div>
+      </div>
       <div class="card"><h2>Funil por origem (UTM) — o que está trazendo lead qualificado</h2>
         <div class="row" style="margin-bottom:10px" id="orig-visoes">
           <button class="btn sec" data-visao="campanha">Campanha</button>
@@ -656,9 +659,15 @@ async function carregarDash() {
   const pAte = dashAte ? dashAte.toISOString() : null;
   const { data: f } = await sb.rpc("fn_admin_funil", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   if (!f) return;
-  const kpis = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram"],["pitch","Chegaram ao pitch"],["clicaram","Clicaram na oferta"],["matriculas","Matrículas 🎓"],["receita","Receita (líq.)"],["cliques_anonimos","Cliques anônimos"],["replays_publicos","Replays públicos"]];
+  const fmtR$ = n => "R$ " + Number(n ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+  const kpis = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram"],["pitch","Chegaram ao pitch"],["clicaram","Clicaram na oferta"],["matriculas","Matrículas 🎓"],["receita","Recebido (líq.)"],["contratos","Em contratos"],["cliques_anonimos","Cliques anônimos"],["replays_publicos","Replays públicos"]];
   $("kpis").innerHTML = kpis.map(([k, l]) => {
-    const v = k === "receita" ? "R$ " + Number(f[k] ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : (f[k] ?? 0).toLocaleString("pt-BR");
+    if (k === "matriculas") {
+      // desdobramento: 💳 valor cheio × 📅 parcelamento inteligente
+      const det = `💳 ${f.matriculas_cheio ?? 0} cheio · 📅 ${f.matriculas_parcela ?? 0} parcela`;
+      return `<div class="kpi"><b>${(f[k] ?? 0).toLocaleString("pt-BR")}</b><span>${l}<br><em style="font-style:normal;color:var(--gold)">${det}</em></span></div>`;
+    }
+    const v = (k === "receita" || k === "contratos") ? fmtR$(f[k]) : (f[k] ?? 0).toLocaleString("pt-BR");
     return `<div class="kpi"><b>${v}</b><span>${l}</span></div>`;
   }).join("");
   const steps = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram na sala"],["q25","25% do vídeo"],["q50","50%"],["q75","75%"],["pitch","Pitch"],["clicaram","Clicaram"],["matriculas","Matricularam 🎓"]];
@@ -667,6 +676,9 @@ async function carregarDash() {
     const v = f[k] || 0, pct = Math.round(v / max * 100);
     return `<div class="bar"><span>${l}</span><div class="trk"><i style="width:${Math.max(1, pct)}%"></i></div><b>${v} <em class="muted" style="font-style:normal">(${pct}%)</em></b></div>`;
   }).join("");
+
+  const { data: mats } = await sb.rpc("fn_admin_matriculados", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
+  renderMatriculados(mats || []);
 
   const { data: og } = await sb.rpc("fn_admin_origens", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   origCache = og || [];
@@ -706,6 +718,39 @@ async function carregarDash() {
   desenharCurva($("abandono"), ab || [], d => d.m, d => d.n, "min");
   const { data: hh } = await sb.rpc("fn_admin_horarios", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   desenharBarras($("horarios"), hh || []);
+}
+
+// ---------- quadro de matriculados ----------
+function renderMatriculados(rows) {
+  const el = $("matriculados");
+  if (!rows.length) { el.innerHTML = '<p class="muted">Nenhuma matrícula no período.</p>'; return; }
+  const fmtDT = t => t ? new Date(t).toLocaleString("pt-BR", { timeZone: "America/Manaus", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
+  const fmtMin = s => s >= 3600 ? Math.floor(s / 3600) + "h" + String(Math.floor(s % 3600 / 60)).padStart(2, "0") : Math.floor(s / 60) + "min";
+  const fmtR$ = n => n == null ? "—" : "R$ " + Number(n).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+  const durVid = (W.duration_seconds || 0);
+  el.innerHTML = "<table><thead><tr><th>Comprador</th><th>Pagamento</th><th>Recebido (líq.)</th><th>Contrato</th><th>Cadastro</th><th>Origem (UTM)</th><th>Assistiu</th><th>Matrícula</th></tr></thead><tbody>" +
+    rows.map(r => {
+      const utm = r.utm || {};
+      const origem = [utm.utm_source, utm.utm_campaign].filter(Boolean).join(" · ") || "orgânico";
+      const conteudo = [utm.utm_content, utm.utm_term].filter(Boolean).join(" › ");
+      const pag = r.forma === "parcela"
+        ? `<span style="color:var(--gold)">📅 Parcelamento inteligente</span><br><span class="muted">parcela ${r.parcela_atual ?? 1}/${r.parcela_total ?? "?"} de ${fmtR$(r.valor_bruto)} · ${r.metodo ?? ""}</span>`
+        : `<span style="color:var(--acc)">💳 Valor cheio</span><br><span class="muted">${fmtR$(r.valor_bruto)} · ${r.metodo ?? ""}</span>`;
+      const pct = durVid ? Math.min(100, Math.round((r.assistiu_seconds || 0) / durVid * 100)) : null;
+      const jornada = fmtMin(r.assistiu_seconds || 0) + (pct != null ? ` (${pct}%)` : "") +
+        (r.atingiu_pitch ? " · 🎯 pitch" : "") + (r.clicou_oferta ? " · 🖱️ clicou" : "");
+      return `<tr>
+        <td><b>${r.nome || "?"}</b><br><span class="muted">${r.email || ""}<br>${r.phone || ""}</span></td>
+        <td>${pag}</td>
+        <td><b>${fmtR$(r.valor_liquido)}</b></td>
+        <td>${r.forma === "parcela" ? `<b style="color:var(--gold)">${fmtR$(r.valor_contrato)}</b>` : fmtR$(r.valor_contrato)}</td>
+        <td>${fmtDT(r.cadastro_at)}${r.qualificado ? "" : ' <span class="muted">(não qualif.)</span>'}</td>
+        <td>${origem}${conteudo ? `<br><span class="muted">${conteudo}</span>` : ""}</td>
+        <td>${jornada}</td>
+        <td>${fmtDT(r.matriculado_at)}<br><span class="muted">${(r.produto || "").replace("ELITE TRIBUNAL DE JUSTIÇA", "Elite TJ")}</span></td>
+      </tr>`;
+    }).join("") + "</tbody></table>" +
+    '<p class="muted" style="margin-top:8px">📅 Parcelamento inteligente: a Hubla recebe parcela a parcela — o "Recebido" é só a parcela paga; o "Contrato" é o valor de face total. 💳 Valor cheio: caiu tudo de uma vez (mesmo que o aluno parcele no cartão dele).</p>';
 }
 
 // ---------- analytics do player (Vturb) ----------
