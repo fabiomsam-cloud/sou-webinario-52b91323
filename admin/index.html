@@ -246,6 +246,10 @@
         </table></div>
         <p class="muted" style="margin-top:8px">Origem vem dos parâmetros de UTM do anúncio (campanha = utm_campaign, conjunto = utm_content, anúncio = utm_term, posicionamento = utm_source). Gasto e CPL vêm direto da Meta pelas campanhas informadas na Config (campo "IDs das campanhas da Meta") e casam com os leads pelo NOME do conjunto/anúncio — renomear conjunto na Meta quebra o casamento com leads antigos. CPL qualif. = gasto ÷ leads qualificados. Matrículas chegam da Hubla (via Data Core, ciclo de 10 min); Receita é LÍQUIDA; CAC = gasto ÷ matrículas e ROAS = receita ÷ gasto.</p>
       </div>
+      <div class="card"><h2>📣 Campanhas da Meta — campanha › público › criativo</h2>
+        <div id="meta-avisos"></div>
+        <div style="overflow-x:auto"><div id="meta-tabela"></div></div>
+      </div>
       <div class="card"><h2>🎬 Vídeo no player (fonte: Vturb)</h2>
         <div class="kpis" id="vt-kpis"></div>
         <div class="grid2" style="margin-top:16px">
@@ -699,6 +703,7 @@ async function carregarDash() {
     spendCache = j.rows || [];
   } catch { /* sem gasto — colunas ficam em — */ }
   renderOrigens();
+  renderMetaCampanhas();
 
   // Analytics do player (API do Vturb via edge function) — falha não derruba o card.
   try {
@@ -839,6 +844,114 @@ function renderOrigens() {
     <td>${gasto ? reais(gasto) : "—"}</td><td><b>${cpl}</b></td><td>${cacRoas}</td></tr>`;
   }).join("")
     || '<tr><td colspan="14" class="muted">Sem leads ainda.</td></tr>';
+}
+
+// ---------- campanhas da Meta (tabela + avisos) ----------
+function renderMetaCampanhas() {
+  const el = $("meta-tabela"), av = $("meta-avisos");
+  const rows = spendCache;
+  if (!rows.length) {
+    av.innerHTML = "";
+    el.innerHTML = '<p class="muted">Sem dados da Meta para o período (campanha não vinculada na Config, token sem permissão ou sem veiculação).</p>';
+    return;
+  }
+  const norm = s => (s || "").trim().toLowerCase();
+  const reais = v => "R$ " + Number(v || 0).toFixed(2).replace(".", ",");
+  const pctf = v => Number(v || 0).toFixed(2).replace(".", ",") + "%";
+
+  // verdade da plataforma por público›criativo (utm_content›utm_term)
+  const plat = {};
+  for (const r of origCache) {
+    const k = norm(r.conjunto) + "›" + norm(r.anuncio);
+    const p = plat[k] ??= { qual: 0, pitch: 0, mat: 0, receita: 0 };
+    p.qual += Number(r.qual || 0); p.pitch += Number(r.pitch || 0);
+    p.mat += Number(r.matriculas || 0); p.receita += Number(r.receita || 0);
+  }
+
+  // ----- avisos de performance -----
+  const rel = rows.filter(r => r.gasto >= 25); // só linha com gasto relevante opina
+  const meds = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; };
+  const medCPM = meds(rel.map(r => r.cpm).filter(Boolean));
+  const cpls = rel.map(r => { const p = plat[norm(r.conjunto) + "›" + norm(r.anuncio)];
+    const leads = (p?.qual || 0) || r.leads_meta; return leads ? r.gasto / leads : null; }).filter(v => v != null);
+  const medCPL = meds(cpls);
+  const avisos = [];
+  for (const r of rel) {
+    const p = plat[norm(r.conjunto) + "›" + norm(r.anuncio)] || { qual: 0, pitch: 0, mat: 0, receita: 0 };
+    const leads = p.qual || r.leads_meta;
+    const nome = `<b>${r.anuncio}</b> <span class="muted">(${r.conjunto})</span>`;
+    if (r.vendas > 0 || p.mat > 0) {
+      const roas = r.valor_vendas && r.gasto ? (r.valor_vendas / r.gasto).toFixed(1).replace(".", ",") + "x" : null;
+      avisos.push([1, "🟢", `${nome} está VENDENDO: ${p.mat || r.vendas} matrícula(s)${roas ? " · ROAS " + roas : ""} — proteja o orçamento dele.`]);
+    } else if (medCPL && leads >= 5 && r.gasto / leads <= medCPL * 0.7) {
+      avisos.push([2, "🟢", `${nome} traz lead ${Math.round((1 - (r.gasto / leads) / medCPL) * 100)}% mais barato que a mediana (${reais(r.gasto / leads)}) — candidato a ESCALAR.`]);
+    }
+    if (r.gasto >= 50 && !leads) {
+      avisos.push([0, "🔴", `${nome} já gastou ${reais(r.gasto)} SEM NENHUM lead qualificado — pausar ou trocar o criativo.`]);
+    } else if (medCPL && leads && r.gasto / leads >= medCPL * 1.8) {
+      avisos.push([1, "🔴", `${nome} com CPL ${reais(r.gasto / leads)} (${((r.gasto / leads) / medCPL).toFixed(1).replace(".", ",")}x a mediana) — rever público/criativo.`]);
+    }
+    if (r.ctr_link && r.ctr_link < 0.8) {
+      avisos.push([2, "🟡", `${nome} com CTR de link ${pctf(r.ctr_link)} (fraco, <0,8%) — o criativo não está parando o dedo.`]);
+    }
+    if (r.frequencia >= 2.5) {
+      avisos.push([2, "🟡", `${nome} com frequência ${Number(r.frequencia).toFixed(1).replace(".", ",")} — público começando a fadigar; renove o criativo ou amplie o público.`]);
+    }
+    if (medCPM && r.cpm >= medCPM * 1.6) {
+      avisos.push([3, "🟡", `${nome} pagando CPM ${reais(r.cpm)} (${(r.cpm / medCPM).toFixed(1).replace(".", ",")}x a mediana da conta) — leilão caro, público possivelmente estreito.`]);
+    }
+    if (r.checkouts >= 3 && !r.vendas && !p.mat) {
+      avisos.push([1, "🟡", `${nome}: ${r.checkouts} checkouts iniciados e ZERO vendas — gargalo na página/oferta, não no anúncio.`]);
+    }
+  }
+  avisos.sort((a, b) => a[0] - b[0]);
+  av.innerHTML = avisos.length
+    ? '<div style="margin-bottom:12px">' + avisos.slice(0, 10).map(([, i, t]) =>
+        `<div style="padding:6px 10px;border-left:3px solid ${i === "🔴" ? "var(--red)" : i === "🟡" ? "var(--gold)" : "var(--acc)"};background:#0d1322;border-radius:0 8px 8px 0;margin-bottom:6px;font-size:.82rem">${i} ${t}</div>`).join("") + "</div>"
+    : '<p class="muted" style="margin-bottom:10px">Nenhum aviso — nenhuma linha com gasto relevante fora da curva.</p>';
+
+  // ----- tabela campanha › público › criativo -----
+  const porCamp = {};
+  for (const r of rows) (porCamp[r.campanha] ??= []).push(r);
+  const soma = (a, f) => a.reduce((t, r) => t + Number(r[f] || 0), 0);
+  const linha = (r) => {
+    const p = plat[norm(r.conjunto) + "›" + norm(r.anuncio)] || { qual: 0, pitch: 0, mat: 0, receita: 0 };
+    const leads = p.qual || r.leads_meta;
+    const cpl = leads ? reais(r.gasto / leads) : "—";
+    const roas = r.gasto && (p.receita || r.valor_vendas) ? ((p.receita || r.valor_vendas) / r.gasto).toFixed(1).replace(".", ",") + "x" : "—";
+    return `<tr>
+      <td><b>${r.anuncio}</b><br><span class="muted">${r.conjunto}</span></td>
+      <td>${reais(r.gasto)}</td><td>${reais(r.cpm)}</td>
+      <td>${Number(r.frequencia || 0).toFixed(1).replace(".", ",")}</td>
+      <td>${r.cliques_link.toLocaleString("pt-BR")} <span class="muted">(${pctf(r.ctr_link)})</span></td>
+      <td>${r.cpc_link ? reais(r.cpc_link) : "—"}</td>
+      <td>${p.qual || "—"} <span class="muted">/ ${r.leads_meta || "—"}</span></td>
+      <td><b>${cpl}</b></td>
+      <td>${p.pitch || "—"}</td>
+      <td>${r.checkouts || "—"}</td>
+      <td><b class="${(p.mat || r.vendas) ? "ok" : ""}">${p.mat || r.vendas || "—"}</b></td>
+      <td>${(p.receita || r.valor_vendas) ? reais(p.receita || r.valor_vendas) : "—"}</td>
+      <td><b>${roas}</b></td></tr>`;
+  };
+  el.innerHTML = "<table><thead><tr><th>Criativo / Público</th><th>Gasto</th><th>CPM</th><th>Freq</th><th>Cliques link (CTR)</th><th>CPC</th><th>Leads plat./Meta</th><th>CPL</th><th>Pitch</th><th>Checkouts</th><th>Vendas</th><th>Receita</th><th>ROAS</th></tr></thead><tbody>" +
+    Object.entries(porCamp).sort((a, b) => soma(b[1], "gasto") - soma(a[1], "gasto")).map(([camp, ads]) => {
+      const g = soma(ads, "gasto"), imp = soma(ads, "impressoes");
+      const platCamp = ads.reduce((t, r) => { const p = plat[norm(r.conjunto) + "›" + norm(r.anuncio)];
+        if (p) { t.qual += p.qual; t.pitch += p.pitch; t.mat += p.mat; t.receita += p.receita; } return t; },
+        { qual: 0, pitch: 0, mat: 0, receita: 0 });
+      const leadsC = platCamp.qual || soma(ads, "leads_meta");
+      const recC = platCamp.receita || soma(ads, "valor_vendas");
+      return `<tr style="background:#0d1322"><td colspan="1"><b style="color:var(--gold)">📣 ${camp}</b></td>
+        <td><b>${reais(g)}</b></td><td>${imp ? reais(g / imp * 1000) : "—"}</td><td></td>
+        <td>${soma(ads, "cliques_link").toLocaleString("pt-BR")}</td><td></td>
+        <td><b>${leadsC || "—"}</b></td><td><b>${leadsC ? reais(g / leadsC) : "—"}</b></td>
+        <td>${platCamp.pitch || "—"}</td><td>${soma(ads, "checkouts") || "—"}</td>
+        <td><b class="${(platCamp.mat || soma(ads, "vendas")) ? "ok" : ""}">${platCamp.mat || soma(ads, "vendas") || "—"}</b></td>
+        <td>${recC ? reais(recC) : "—"}</td>
+        <td><b>${g && recC ? (recC / g).toFixed(1).replace(".", ",") + "x" : "—"}</b></td></tr>` +
+        ads.sort((a, b) => b.gasto - a.gasto).map(linha).join("");
+    }).join("") + "</tbody></table>" +
+    '<p class="muted" style="margin-top:8px">Leads plat./Meta = qualificados rastreados pela plataforma (verdade) / evento Lead atribuído pela Meta. Vendas e Receita priorizam as matrículas da plataforma (atribuição do webinário); na falta, caem para o pixel. Linha dourada = total da campanha.</p>';
 }
 
 function desenharCurva(el, dados, fx, fy, unidade) {
