@@ -435,6 +435,7 @@ const CHECKLIST = [
   { id:"espera",         label:"13. Sala de espera + horários",              auto: w => (w.waiting_minutes||0) > 0 && w.open_hour != null && w.close_hour != null },
   { id:"templates",      label:"14. 5 templates Meta aprovados (Anne)",      manual: true, hint:"Confirmação + 4 réguas comportamentais." },
   { id:"agente_anne",    label:"15. Agente da Anne criado e vinculado",      manual: true, hint:"Ex.: webinario_tjam, com escada de precedência." },
+  { id:"material_og",    label:"16. Material com página de entrega + capa",  manual: true, hint:"PADRÃO DA CASA: link de material NUNCA aponta para PDF cru — sempre página com OG tags (título + capa) que redireciona ao PDF, como materiais/vade-mecum-tjam/. Senão a prévia do WhatsApp vira 'Site not found'." },
 ];
 
 let webinars = [], W = null, chatCount = 0, pg = 0;
