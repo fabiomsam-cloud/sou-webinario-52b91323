@@ -228,6 +228,8 @@
       </div>
       <div class="card"><h2>Funil</h2>
         <div class="kpis" id="kpis"></div>
+        <div class="kpis" id="kpis-custos" style="margin-top:10px"></div>
+        <p class="muted" style="margin:8px 0 0">💬 Disparo = campanhas de carga na Anne (templates × tarifa). 📣 Meta = gasto real do Gerenciador; CAC/ROAS só de matrículas com clique pago rastreado (link compartilhado fica de fora). 🧮 Funil completo = Meta + disparos + régua sobre TODAS as matrículas do período. ROAS sempre sobre CONTRATOS.</p>
         <div class="funil" id="funil" style="margin-top:16px"></div>
       </div>
       <div class="card"><h2>🎓 Matriculados — quem comprou, de onde veio e como pagou</h2>
@@ -691,6 +693,10 @@ async function carregarDash() {
   const { data: mats } = await sb.rpc("fn_admin_matriculados", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   renderMatriculados(mats || []);
 
+  // custos por canal (disparo/régua via n8n) — alimenta os cards de verba/CAC/ROAS
+  const { data: custos } = await sb.rpc("fn_admin_custos", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
+  renderCustosCards(f, custos, null); // Meta ainda carregando → card mostra "…"
+
   const { data: og } = await sb.rpc("fn_admin_origens", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   origCache = og || [];
   spendCache = [];
@@ -708,7 +714,8 @@ async function carregarDash() {
     });
     const j = await r.json();
     spendCache = j.rows || [];
-  } catch { /* sem gasto — colunas ficam em — */ }
+    renderCustosCards(f, custos, spendCache.reduce((t, r) => t + Number(r.gasto || 0), 0));
+  } catch { renderCustosCards(f, custos, null, true); /* sem gasto — colunas ficam em — */ }
   renderOrigens();
   renderMetaCampanhas();
 
@@ -730,6 +737,46 @@ async function carregarDash() {
   desenharCurva($("abandono"), ab || [], d => d.m, d => d.n, "min");
   const { data: hh } = await sb.rpc("fn_admin_horarios", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   desenharBarras($("horarios"), hh || []);
+}
+
+// ---------- cards de verba/CAC/ROAS por canal (disparo Anne · Meta · funil completo) ----------
+// gastoMeta: null = ainda carregando ("…"); metaFalhou: rota /meta/spend indisponível ("—").
+function renderCustosCards(f, custos, gastoMeta, metaFalhou) {
+  const el = $("kpis-custos");
+  if (!el) return;
+  const c = custos || {};
+  const reais = v => "R$ " + Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+  const x1 = v => v.toFixed(1).replace(".", ",") + "x";
+  // CAC/ROAS de um canal: sem verba ou sem matrícula → "—" (nunca dividir por zero).
+  const par = (verba, mats, contratos) => {
+    const cac = verba > 0 && mats > 0 ? reais(verba / mats) : "—";
+    const roas = verba > 0 && contratos > 0 ? x1(contratos / verba) : "—";
+    return `CAC ${cac} · ROAS ${roas}`;
+  };
+  const tile = (big, label, det) =>
+    `<div class="kpi"><b>${big}</b><span>${label}<br><em style="font-style:normal;color:var(--gold)">${det}</em></span></div>`;
+
+  const dispCusto = Number(c.disparo_custo || 0), dispMsgs = Number(c.disparo_msgs || 0);
+  const reguaCusto = Number(c.regua_custo || 0), reguaMsgs = Number(c.regua_msgs || 0);
+  const matDisp = Number(c.mat_disparo || 0), contDisp = Number(c.contratos_disparo || 0);
+  const matPago = Number(c.mat_pago || 0), contPago = Number(c.contratos_pago || 0);
+  const matTot = Number(f.matriculas || 0), contTot = Number(f.contratos || 0);
+
+  const cards = [];
+  cards.push(tile(reais(dispCusto), `💬 Disparos Anne (${dispMsgs.toLocaleString("pt-BR")} msgs · ${matDisp} matr.)`,
+    par(dispCusto, matDisp, contDisp)));
+  if (gastoMeta == null) {
+    cards.push(tile(metaFalhou ? "—" : "…", `📣 Tráfego Meta (${matPago} matr.)`,
+      metaFalhou ? "sem dados da Meta" : "carregando gasto…"));
+  } else {
+    cards.push(tile(reais(gastoMeta), `📣 Tráfego Meta (${matPago} matr.)`,
+      par(gastoMeta, matPago, contPago)));
+  }
+  const invest = dispCusto + reguaCusto + (gastoMeta || 0);
+  cards.push(tile(gastoMeta == null && !metaFalhou ? "…" : reais(invest),
+    `🧮 Funil completo (${matTot} matr. · régua ${reguaMsgs.toLocaleString("pt-BR")} msgs ${reais(reguaCusto)})`,
+    gastoMeta == null && !metaFalhou ? "carregando…" : par(invest, matTot, contTot)));
+  el.innerHTML = cards.join("");
 }
 
 // ---------- quadro de matriculados ----------
