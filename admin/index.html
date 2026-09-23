@@ -673,17 +673,18 @@ async function carregarDash() {
   const { data: f } = await sb.rpc("fn_admin_funil", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
   if (!f) return;
   const fmtR$ = n => "R$ " + Number(n ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-  const kpis = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram"],["pitch","Chegaram ao pitch"],["clicaram","Clicaram na oferta"],["matriculas","Matrículas 🎓"],["receita","Recebido (líq.)"],["contratos","Em contratos"],["cliques_anonimos","Cliques anônimos"],["replays_publicos","Replays públicos"]];
+  const kpis = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram"],["pitch","Chegaram ao pitch"],["clicaram","Clicaram na oferta"],["matriculas","Matrículas 🎓 (compras no período)"],["receita","Recebido (líq.)"],["contratos","Em contratos"],["cliques_anonimos","Cliques anônimos"],["replays_publicos","Replays públicos"]];
   $("kpis").innerHTML = kpis.map(([k, l]) => {
     if (k === "matriculas") {
       // desdobramento: 💳 valor cheio × 📅 parcelamento inteligente
-      const det = `💳 ${f.matriculas_cheio ?? 0} cheio · 📅 ${f.matriculas_parcela ?? 0} parcela`;
+      // pela data da COMPRA no período; coorte = quem também se cadastrou no período
+      const det = `💳 ${f.matriculas_cheio ?? 0} cheio · 📅 ${f.matriculas_parcela ?? 0} parcela · 👥 ${f.matriculas_coorte ?? 0} cadastrados no período`;
       return `<div class="kpi"><b>${(f[k] ?? 0).toLocaleString("pt-BR")}</b><span>${l}<br><em style="font-style:normal;color:var(--gold)">${det}</em></span></div>`;
     }
     const v = (k === "receita" || k === "contratos") ? fmtR$(f[k]) : (f[k] ?? 0).toLocaleString("pt-BR");
     return `<div class="kpi"><b>${v}</b><span>${l}</span></div>`;
   }).join("");
-  const steps = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram na sala"],["q25","25% do vídeo"],["q50","50%"],["q75","75%"],["pitch","Pitch"],["clicaram","Clicaram"],["matriculas","Matricularam 🎓"]];
+  const steps = [["cadastros","Cadastros"],["qualificados","Qualificados"],["entraram","Entraram na sala"],["q25","25% do vídeo"],["q50","50%"],["q75","75%"],["pitch","Pitch"],["clicaram","Clicaram"],["matriculas_coorte","Matricularam 🎓"]];
   const max = Math.max(1, f.cadastros || 0);
   $("funil").innerHTML = steps.map(([k, l]) => {
     const v = f[k] || 0, pct = Math.round(v / max * 100);
