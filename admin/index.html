@@ -70,6 +70,39 @@
   .ok{color:var(--acc)} .no{color:var(--mut)}
   .link-box{background:#0d1322;border:1px dashed var(--line);border-radius:9px;padding:9px 12px;font-family:ui-monospace,Menlo,monospace;font-size:.74rem;word-break:break-all;color:var(--blue);margin:6px 0;cursor:pointer}
   .muted{color:var(--mut);font-size:.8rem}
+  /* ===== histórico = folha semanal impressa (mesmo padrão do PDF da parede) ===== */
+  .folha{background:#fff;color:#23344F;border-radius:10px;padding:22px 24px 16px;margin-bottom:18px;font-family:'DejaVu Sans',Verdana,-apple-system,sans-serif}
+  .folha h3{font-size:1.45rem;font-weight:800;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .folha h3 button{font-size:.72rem;font-weight:700;background:#fff;border:1px solid #AEBBCB;color:#23344F;border-radius:999px;padding:5px 12px;cursor:pointer}
+  .folha .nota{font-size:.78rem;margin-bottom:10px}
+  .folha .nota.alerta{color:#B4532A;font-weight:700}
+  .folha .cab{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 18px;font-size:.84rem;margin:3px 0}
+  .folha .tw{overflow-x:auto;margin-top:8px}
+  .folha table{border-collapse:collapse;width:100%;min-width:860px;font-size:.8rem;border:1px solid #AEBBCB}
+  .folha th{background:#1B3A66;color:#fff;text-align:center;padding:5px 4px;font-weight:700;border:none;line-height:1.25}
+  .folha th:first-child{text-align:left;padding-left:10px}
+  .folha th small{display:block;font-weight:400;font-size:.72rem;opacity:.9}
+  .folha td{padding:3px 6px;border-bottom:1px solid #AEBBCB;border-left:1px solid #AEBBCB;text-align:center;color:#10233F;white-space:nowrap;height:21px}
+  .folha td.sec{width:18px;padding:0;border:none}
+  .folha td.sec span{display:block;writing-mode:vertical-rl;transform:rotate(180deg);margin:0 auto;color:#fff;font-size:.55rem;font-weight:700;letter-spacing:.05em}
+  .folha td.lab{text-align:left;background:#F4F6F9;color:#23344F;width:210px}
+  .folha tr.dst td{font-weight:700}
+  .folha tr.dst td.lab{background:#E6EEF7}
+  .folha td.sem{background:#F1F3F6;font-weight:700}
+  .folha tr.fim td{border-bottom:1.5px solid #1B3A66}
+  .folha .leit{font-size:.8rem;font-weight:700;margin-top:10px;border-bottom:1px solid #AEBBCB;padding-bottom:14px}
+  .folha .form{font-size:.66rem;color:#5A6678;margin-top:8px;line-height:1.5}
+  @media print{
+    @page{size:A4 landscape;margin:7mm}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{background:#fff}
+    header,nav,.hist-bar,.toast,.folha h3 button,#tab-config,#tab-chat,#tab-dash,#tab-leads,#tab-equipe{display:none!important}
+    main{padding:0;max-width:none}
+    .folha{break-after:page;page-break-after:always;margin:0;padding:0;border-radius:0;font-size:12px}
+    .folha .tw{overflow:visible}
+    .folha table{min-width:0}
+    body.print-uma .folha:not(.alvo){display:none}
+  }
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--acc);color:#04120a;font-weight:700;padding:11px 22px;border-radius:99px;display:none;z-index:9}
 </style>
 </head>
@@ -101,6 +134,7 @@
     <button data-tab="chat">💬 Chat fake</button>
     <button data-tab="dash">📊 Dashboard</button>
     <button data-tab="leads">👥 Leads</button>
+    <button data-tab="hist">📅 Histórico</button>
     <button data-tab="equipe">🧑‍💼 Equipe</button>
   </nav>
   <main>
@@ -324,6 +358,20 @@
       </div>
     </section>
 
+    <!-- ===== HISTÓRICO (folha semanal, mesmo padrão do PDF impresso) ===== -->
+    <section id="tab-hist" class="hide">
+      <div class="card hist-bar">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <h2 style="margin-bottom:4px">📅 Histórico semana a semana</h2>
+            <p class="muted">Mesmo formato da folha impressa. Dias fechados até ontem (dia de Manaus) · Fontes: Meta Ads (investimento, cliques, visitas) · plataforma (funil) · Hubla (receita líquida, pela data da compra).</p>
+          </div>
+          <button class="btn sec" id="hist-print">🖨️ Imprimir todas</button>
+        </div>
+      </div>
+      <div id="hist-folhas"></div>
+    </section>
+
     <!-- ===== EQUIPE ===== -->
     <section id="tab-equipe" class="hide">
       <div class="card">
@@ -518,6 +566,7 @@ async function selecionar(id) {
   renderChecklist();
   if (!$("tab-dash").classList.contains("hide")) carregarDash();
   if (!$("tab-leads").classList.contains("hide")) carregarLeads();
+  if (!$("tab-hist").classList.contains("hide")) carregarHist();
 }
 
 function renderChecklist() {
@@ -1215,13 +1264,128 @@ $("eq-criar").onclick = async () => {
   } else alert("Erro: " + out.error);
 };
 
+// ---------- histórico: folha semanal (espelho de WEBNARIOS/controle-diario/gerar_folha.py) ----------
+const hDiv = (a, b, m = 1) => b ? a / b * m : null;
+const H_SECOES = [
+  ["TRÁFEGO", "#5B7FA6", [
+    ["Investimento (R$)", 0, d => d.investimento, "brl"],
+    ["Cliques no link", 0, d => d.cliques_link, "int"],
+    ["CPC (R$)", 0, d => hDiv(d.investimento, d.cliques_link), "brl"],
+    ["Visitas à página de cadastro", 0, d => d.visitas_pagina, "int"]]],
+  ["CADASTRO", "#3F8F8A", [
+    ["Cadastros", 0, d => d.cadastros, "int"],
+    ["Taxa de cadastro (%)", 0, d => hDiv(d.cadastros, d.visitas_pagina, 100), "pct1"],
+    ["CPL (R$)", 1, d => hDiv(d.investimento, d.cadastros), "brl"]]],
+  ["SALA", "#7A6BB0", [
+    ["Assistiram (plays únicos)", 0, d => d.plays_unicos, "int"],
+    ["Comparecimento (%)", 1, d => hDiv(d.plays_unicos, d.cadastros, 100), "pct1"],
+    ["Retenção em 1 min (%)", 0, d => hDiv(d.retidos_1min, d.plays_unicos, 100), "pct1"],
+    ["Chegaram ao pitch", 0, d => d.chegaram_pitch, "int"],
+    ["Retenção até o pitch (%)", 1, d => hDiv(d.chegaram_pitch, d.plays_unicos, 100), "pct1"]]],
+  ["OFERTA", "#C0843A", [
+    ["Clicaram na oferta", 0, d => d.clicaram_oferta, "int"],
+    ["Clique na oferta (%)", 0, d => hDiv(d.clicaram_oferta, d.chegaram_pitch, 100), "pct1"]]],
+  ["RESULTADO", "#2E7D4F", [
+    ["Matrículas", 1, d => d.matriculas, "int"],
+    ["Conversão (%)", 0, d => hDiv(d.matriculas, d.cadastros, 100), "pct2"],
+    ["Receita líquida (R$)", 0, d => d.receita_liquida, "brl"],
+    ["Ticket médio (R$)", 0, d => hDiv(d.receita_liquida, d.matriculas), "brl"],
+    ["CPA (R$)", 1, d => hDiv(d.investimento, d.matriculas), "brl"],
+    ["ROAS (vezes)", 1, d => hDiv(d.receita_liquida, d.investimento), "x"]]],
+];
+const H_VOL = ["investimento","cliques_link","visitas_pagina","cadastros","cadastros_meta","plays_unicos","retidos_1min","chegaram_pitch","clicaram_oferta","matriculas","receita_liquida"];
+const H_NOME = { tjam: "TJ-AM", seducpa: "SEDUC-PA", seducam: "SEDUC-AM", manausprev: "MANAUS PREV" };
+function hFmt(v, t) {
+  if (v == null) return "—";
+  if (t === "int") return Math.round(v).toLocaleString("pt-BR");
+  const c = { brl: 2, pct1: 1, pct2: 2, x: 2 }[t];
+  return v.toLocaleString("pt-BR", { minimumFractionDigits: c, maximumFractionDigits: c });
+}
+const hAdd = (iso, n) => { const d = new Date(iso + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const hDow = iso => (new Date(iso + "T00:00:00Z").getUTCDay() + 6) % 7; // 0 = segunda
+const hBr = (iso, ano) => iso.slice(8, 10) + "/" + iso.slice(5, 7) + (ano ? "/" + iso.slice(0, 4) : "");
+const hEsc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function folhaHtml(w, seg, porDia, primeiro, hoje) {
+  const cols = [], fechados = [];
+  let andamento = false;
+  for (let i = 0; i < 7; i++) {
+    const k = hAdd(seg, i);
+    if (k < primeiro) cols.push("—");                       // antes do lançamento
+    else if (k >= hoje) { cols.push(null); andamento = true; } // hoje (parcial) e futuro = em branco
+    else { const d = porDia[k] || {}; const v = {}; H_VOL.forEach(c => v[c] = Number(d[c] || 0)); cols.push(v); fechados.push(v); }
+  }
+  let total = null;
+  if (fechados.length && !andamento) { total = {}; H_VOL.forEach(c => total[c] = fechados.reduce((t, d) => t + d[c], 0)); }
+  const cad = fechados.reduce((t, d) => t + d.cadastros, 0), fora = cad - fechados.reduce((t, d) => t + d.cadastros_meta, 0);
+  const aviso = cad && fora / cad >= 0.15
+    ? `⚠ ${Math.round(100 * fora / cad)}% dos cadastros da semana não vieram da Meta (disparos da Anne/orgânico): taxa de cadastro e CPL saem distorcidos, e o investimento é só Meta.` : null;
+  const nota = aviso || (andamento ? "Semana em andamento: dados até ontem; os dias seguintes e a coluna SEMANA completam a cada dia."
+    : "Semana fechada. Use o espaço abaixo da tabela para a leitura e o ajuste da próxima semana.");
+  const camp = (w.campanhas || []).map(c => (c.nome ? c.nome + " · " : "") + c.id).join(" + ");
+  const dias = ["SEG","TER","QUA","QUI","SEX","SÁB","DOM"];
+  let corpo = "";
+  H_SECOES.forEach(([sec, cor, linhas]) => linhas.forEach(([rot, dst, calc, tipo], i) => {
+    const cls = [dst ? "dst" : "", i === linhas.length - 1 ? "fim" : ""].join(" ");
+    corpo += `<tr class="${cls}">` + (i === 0 ? `<td class="sec" rowspan="${linhas.length}" style="background:${cor}"><span>${sec}</span></td>` : "")
+      + `<td class="lab">${rot}</td>`
+      + cols.map(d => `<td>${d === "—" ? "—" : d ? hFmt(calc(d), tipo) : ""}</td>`).join("")
+      + `<td class="sem">${total ? hFmt(calc(total), tipo) : ""}</td></tr>`;
+  }));
+  return `<div class="folha" data-seg="${seg}">
+    <h3><span>CONTROLE SEMANAL DE WEBINÁRIO</span><button data-print="${seg}">🖨️ Imprimir esta semana</button></h3>
+    <div class="nota ${aviso ? "alerta" : ""}">${nota}</div>
+    <div class="cab"><span><b>WEBINÁRIO:</b> ${hEsc(H_NOME[w.slug] || w.concurso || w.slug)}</span><span><b>SEMANA:</b> ${hBr(seg, 1)} a ${hBr(hAdd(seg, 6), 1)}</span></div>
+    <div class="cab"><span><b>Oferta:</b> ${hEsc((w.oferta || "").split(" — ")[0])}</span><span><b>Campanha:</b> ${hEsc(camp) || "—"}</span></div>
+    <div class="tw"><table>
+      <thead><tr><th colspan="2">MÉTRICA</th>${dias.map((n, i) => `<th>${n}<small>${hBr(hAdd(seg, i))}</small></th>`).join("")}<th>SEMANA¹</th></tr></thead>
+      <tbody>${corpo}</tbody>
+    </table></div>
+    <div class="leit">LEITURA DA SEMANA / AJUSTE OU TESTE PARA A PRÓXIMA:</div>
+    <div class="form">FÓRMULAS CPC = gasto ÷ cliques | Taxa de cadastro = cadastros ÷ visitas × 100 | CPL = gasto ÷ cadastros | Comparecimento = assistiram ÷ cadastros × 100<br>
+      Retenção em 1 min e até o pitch = ÷ assistiram × 100 | Clique na oferta = clicaram ÷ chegaram ao pitch × 100 | Conversão = matrículas ÷ cadastros × 100<br>
+      Ticket = receita líquida ÷ matrículas | CPA = gasto ÷ matrículas | ROAS = receita líquida ÷ gasto. Matrícula conta no dia da compra. Sem denominador, use —.<br>
+      ¹ Na semana, some volumes e valores; recalcule as taxas pelos totais. Não faça média simples. · Gerada em ${hBr(hoje, 1)} · Fontes: Meta Ads · plataforma SOU Webinário · Hubla (líquido)</div>
+  </div>`;
+}
+
+async function carregarHist() {
+  const box = $("hist-folhas"), alvo = W.id;
+  box.innerHTML = '<div class="card"><p class="muted">Carregando o histórico (plataforma + Meta)…</p></div>';
+  let j;
+  try {
+    const { data: s } = await sb.auth.getSession();
+    const r = await fetch(FN_API + "/historico?w=" + encodeURIComponent(W.slug), {
+      headers: { "Authorization": "Bearer " + s.session.access_token, "apikey": SB_KEY },
+    });
+    j = await r.json();
+  } catch { j = { error: "sem resposta da plataforma" }; }
+  if (W.id !== alvo) return; // trocou de webinário enquanto carregava
+  const w = (j.webinars || [])[0];
+  if (j.error || !w) { box.innerHTML = `<div class="card"><p class="muted">Não foi possível carregar o histórico: ${hEsc(j.error || "webinário não encontrado")}</p></div>`; return; }
+  if (!w.dias.length) { box.innerHTML = '<div class="card"><p class="muted">Ainda não há dados para este webinário.</p></div>'; return; }
+  const porDia = Object.fromEntries(w.dias.map(d => [d.dia, d]));
+  const primeiro = w.dias[0].dia, ontem = hAdd(j.hoje, -1);
+  const semanas = [];
+  for (let seg = hAdd(primeiro, -hDow(primeiro)); seg <= ontem; seg = hAdd(seg, 7)) semanas.push(seg);
+  box.innerHTML = semanas.reverse().map(seg => folhaHtml(w, seg, porDia, primeiro, j.hoje)).join("");
+  box.querySelectorAll("[data-print]").forEach(b => b.onclick = () => {
+    box.querySelectorAll(".folha").forEach(f => f.classList.toggle("alvo", f.dataset.seg === b.dataset.print));
+    document.body.classList.add("print-uma");
+    window.print();
+    document.body.classList.remove("print-uma");
+  });
+}
+$("hist-print").onclick = () => window.print();
+
 // ---------- tabs ----------
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
-  ["config","chat","dash","leads","equipe"].forEach(t => $("tab-" + t).classList.toggle("hide", t !== b.dataset.tab));
+  ["config","chat","dash","leads","hist","equipe"].forEach(t => $("tab-" + t).classList.toggle("hide", t !== b.dataset.tab));
   if (b.dataset.tab === "dash") carregarDash();
   if (b.dataset.tab === "leads") { pg = 0; carregarLeads(); }
   if (b.dataset.tab === "equipe") carregarEquipe();
+  if (b.dataset.tab === "hist") carregarHist();
 });
 
 $("f-vturb_embed").addEventListener("input", vturbDetect);
