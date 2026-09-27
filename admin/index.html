@@ -1368,7 +1368,12 @@ async function carregarHist() {
   const primeiro = w.dias[0].dia, ontem = hAdd(j.hoje, -1);
   const semanas = [];
   for (let seg = hAdd(primeiro, -hDow(primeiro)); seg <= ontem; seg = hAdd(seg, 7)) semanas.push(seg);
-  box.innerHTML = semanas.reverse().map(seg => folhaHtml(w, seg, porDia, primeiro, j.hoje)).join("");
+  // alarme: campanha [WEB] ativa na conta sem vínculo com webinário → o tráfego dela não entra nas folhas
+  const alarme = (j.sem_vinculo || []).length
+    ? `<div class="card hist-bar" style="border-color:var(--red)"><h2 style="color:var(--red)">⚠ Campanha de webinário ativa sem vínculo</h2>
+        <p class="muted">O gasto destas campanhas NÃO entra nas folhas até o ID ser incluído em "IDs das campanhas da Meta" (aba ⚙️ Configuração) do webinário certo:</p>
+        <p style="margin-top:6px;font-size:.85rem">${j.sem_vinculo.map(c => `${hEsc(c.nome)} · <b>${hEsc(c.id)}</b>`).join("<br>")}</p></div>` : "";
+  box.innerHTML = alarme + semanas.reverse().map(seg => folhaHtml(w, seg, porDia, primeiro, j.hoje)).join("");
   box.querySelectorAll("[data-print]").forEach(b => b.onclick = () => {
     box.querySelectorAll(".folha").forEach(f => f.classList.toggle("alvo", f.dataset.seg === b.dataset.print));
     document.body.classList.add("print-uma");
