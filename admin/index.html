@@ -1315,12 +1315,14 @@ function folhaHtml(w, seg, porDia, primeiro, hoje) {
     else if (k >= hoje) { cols.push(null); andamento = true; } // hoje (parcial) e futuro = em branco
     else { const d = porDia[k] || {}; const v = {}; H_VOL.forEach(c => v[c] = Number(d[c] || 0)); cols.push(v); fechados.push(v); }
   }
+  // SEMANA = soma dos dias fechados; com a semana em andamento vira a PARCIAL (pedido do Fábio 30/09)
   let total = null;
-  if (fechados.length && !andamento) { total = {}; H_VOL.forEach(c => total[c] = fechados.reduce((t, d) => t + d[c], 0)); }
+  if (fechados.length) { total = {}; H_VOL.forEach(c => total[c] = fechados.reduce((t, d) => t + d[c], 0)); }
+  const parcial = andamento && fechados.length ? `parcial · ${fechados.length} dia${fechados.length > 1 ? "s" : ""}` : "";
   const cad = fechados.reduce((t, d) => t + d.cadastros, 0), fora = cad - fechados.reduce((t, d) => t + d.cadastros_meta, 0);
   const aviso = cad && fora / cad >= 0.15
     ? `⚠ ${Math.round(100 * fora / cad)}% dos cadastros da semana não vieram da Meta (disparos da Anne/orgânico): taxa de cadastro e CPL saem distorcidos, e o investimento é só Meta.` : null;
-  const nota = aviso || (andamento ? "Semana em andamento: dados até ontem; os dias seguintes e a coluna SEMANA completam a cada dia."
+  const nota = aviso || (andamento ? "Semana em andamento: dados até ontem; a coluna SEMANA mostra a PARCIAL dos dias já fechados."
     : "Semana fechada. Use o espaço abaixo da tabela para a leitura e o ajuste da próxima semana.");
   const camp = (w.campanhas || []).map(c => (c.nome ? c.nome + " · " : "") + c.id).join(" + ");
   const dias = ["SEG","TER","QUA","QUI","SEX","SÁB","DOM"];
@@ -1338,7 +1340,7 @@ function folhaHtml(w, seg, porDia, primeiro, hoje) {
     <div class="cab"><span><b>WEBINÁRIO:</b> ${hEsc(H_NOME[w.slug] || w.concurso || w.slug)}</span><span><b>SEMANA:</b> ${hBr(seg, 1)} a ${hBr(hAdd(seg, 6), 1)}</span></div>
     <div class="cab"><span><b>Oferta:</b> ${hEsc((w.oferta || "").split(" — ")[0])}</span><span><b>Campanha:</b> ${hEsc(camp) || "—"}</span></div>
     <div class="tw"><table>
-      <thead><tr><th colspan="2">MÉTRICA</th>${dias.map((n, i) => `<th>${n}<small>${hBr(hAdd(seg, i))}</small></th>`).join("")}<th>SEMANA¹</th></tr></thead>
+      <thead><tr><th colspan="2">MÉTRICA</th>${dias.map((n, i) => `<th>${n}<small>${hBr(hAdd(seg, i))}</small></th>`).join("")}<th>SEMANA¹${parcial ? `<small>${parcial}</small>` : ""}</th></tr></thead>
       <tbody>${corpo}</tbody>
     </table></div>
     <div class="leit">LEITURA DA SEMANA / AJUSTE OU TESTE PARA A PRÓXIMA:</div>
