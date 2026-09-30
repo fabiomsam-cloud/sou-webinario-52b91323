@@ -53,6 +53,7 @@
   .pill.rascunho{background:rgba(251,191,36,.15);color:var(--gold)}
   .pill.publicado{background:rgba(34,197,94,.15);color:var(--acc)}
   .pill.pausado{background:rgba(248,113,113,.15);color:var(--red)}
+  .pill.arquivado{background:rgba(154,164,191,.15);color:var(--mut)}
   /* dashboard */
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
   .kpi{background:#0d1322;border:1px solid var(--line);border-radius:12px;padding:14px}
@@ -153,6 +154,8 @@
                 <div class="row"><span class="pill" id="f-status-pill"></span>
                   <button class="btn" id="btn-publicar">Publicar</button>
                   <button class="btn warn hide" id="btn-pausar">Pausar</button>
+                  <button class="btn sec" id="btn-arquivar" title="Tira o webinário de todas as rotinas e dados do dia a dia; o histórico fica guardado">🗄️ Arquivar</button>
+                  <button class="btn sec hide" id="btn-desarquivar">↩️ Desarquivar</button>
                 </div>
               </div>
             </div>
@@ -520,9 +523,12 @@ async function carregarWebinars(keep) {
   const { data } = await sb.from("webinars").select("*").order("created_at");
   webinars = data || [];
   const sel = $("sel-webinar");
-  sel.innerHTML = webinars.map(w => `<option value="${w.id}">${w.name} (${w.status})</option>`).join("");
+  // arquivados vão para um grupo separado no fim do seletor (consultáveis, fora do dia a dia)
+  const opt = w => `<option value="${w.id}">${w.name} (${w.status})</option>`;
+  const ativos = webinars.filter(w => w.status !== "arquivado"), arq = webinars.filter(w => w.status === "arquivado");
+  sel.innerHTML = ativos.map(opt).join("") + (arq.length ? `<optgroup label="🗄️ Arquivados">${arq.map(opt).join("")}</optgroup>` : "");
   if (keep) sel.value = keep;
-  selecionar(sel.value || (webinars[0] && webinars[0].id));
+  selecionar(sel.value || (ativos[0] || webinars[0] || {}).id);
 }
 $("sel-webinar").onchange = e => selecionar(e.target.value);
 $("btn-novo").onclick = async () => {
@@ -553,6 +559,9 @@ async function selecionar(id) {
   $("f-espera_mensagens").value = Array.isArray(W.espera_mensagens) ? W.espera_mensagens.join("\n") : "";
   $("f-status-pill").textContent = W.status; $("f-status-pill").className = "pill " + W.status;
   $("btn-pausar").classList.toggle("hide", W.status !== "publicado");
+  $("btn-arquivar").classList.toggle("hide", W.status === "arquivado");
+  $("btn-desarquivar").classList.toggle("hide", W.status !== "arquivado");
+  $("btn-publicar").classList.toggle("hide", W.status === "arquivado");
   $("lk-cad").textContent = PAGE_BASE + "?w=" + W.slug;
   $("lk-ponte").textContent = PAGE_BASE + "ponte/?w=" + W.slug;
   $("lk-replay").textContent = PAGE_BASE + "sala/?w=" + W.slug + "&pub=1";
@@ -637,6 +646,18 @@ $("btn-publicar").onclick = async () => {
   if (!confirm("Publicar este webinário? Ele passa a aceitar cadastros reais.")) return;
   const { error } = await sb.from("webinars").update({ status: "publicado" }).eq("id", W.id);
   if (!error) { toast("Publicado!"); carregarWebinars(W.id); }
+};
+$("btn-arquivar").onclick = async () => {
+  if (!confirm(`Arquivar "${W.name}"?\n\nSai da rotina das folhas (07h), das réguas da Anne, da exportação para o Data Core e da Sala de Controle. Cadastro e sala ficam fora do ar.\n\nLeads, matrículas e o Histórico ficam guardados — dá para desarquivar depois.`)) return;
+  const { error } = await sb.from("webinars").update({ status: "arquivado", archived_at: new Date().toISOString() }).eq("id", W.id);
+  if (error) { alert("Erro: " + error.message); return; }
+  toast("Arquivado"); carregarWebinars(W.id);
+};
+$("btn-desarquivar").onclick = async () => {
+  if (!confirm("Desarquivar? Ele volta como PAUSADO (páginas continuam fora do ar até você publicar de novo).")) return;
+  const { error } = await sb.from("webinars").update({ status: "pausado", archived_at: null }).eq("id", W.id);
+  if (error) { alert("Erro: " + error.message); return; }
+  toast("Desarquivado — está pausado"); carregarWebinars(W.id);
 };
 $("btn-pausar").onclick = async () => {
   if (!confirm("Pausar? Páginas deste webinário ficam indisponíveis.")) return;
