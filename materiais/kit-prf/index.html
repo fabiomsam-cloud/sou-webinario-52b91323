@@ -27,10 +27,30 @@
     <img src="../kit-prf-df2f077c.jpg" alt="Kit de Preparação PRF 2027">
     <h1>Kit de Preparação PRF 2027</h1>
     <p>Seus 3 materiais estão aqui. Toque em cada um para abrir:</p>
-    <a class="btn" href="../raio-x-prf-2026-df2f077c.pdf">🎯 RAIO-X PRF — assuntos Ovos de Ouro</a>
-    <a class="btn" href="../arsenal-elite-prf-df2f077c.pdf">🛡️ ARSENAL ELITE FEDERAL</a>
-    <a class="btn" href="../guia-taf-prf-df2f077c.pdf">🏃 GUIA PRÁTICO DO TAF</a>
+    <a class="btn" data-arquivo="raio-x" href="../raio-x-prf-2026-df2f077c.pdf">🎯 RAIO-X PRF — assuntos Ovos de Ouro</a>
+    <a class="btn" data-arquivo="arsenal" href="../arsenal-elite-prf-df2f077c.pdf">🛡️ ARSENAL ELITE FEDERAL</a>
+    <a class="btn" data-arquivo="taf" href="../guia-taf-prf-df2f077c.pdf">🏃 GUIA PRÁTICO DO TAF</a>
     <small>Dica: salve os PDFs no seu celular para estudar mesmo sem internet.</small>
   </div>
+<script src="../../assets/app.js"></script>
+<script>
+// Registra quem abriu a página e quem tocou em cada PDF (09/10). Token: link pessoal (?t=)
+// ou o salvo no navegador de quem entrou na sala. Nunca bloqueia a abertura do PDF.
+(function () {
+  var W = "prf", qs = new URLSearchParams(location.search);
+  var t = qs.get("t") || (window.SW && SW.getToken ? SW.getToken(W) : null);
+  function reg(acao, arquivo) {
+    try {
+      fetch(SW.API + "/material", { method: "POST", keepalive: true,
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + SW.KEY },
+        body: JSON.stringify({ w: W, t: t, acao: acao, arquivo: arquivo || null, o: qs.get("o") || null }) });
+    } catch (e) {}
+  }
+  reg("abriu");
+  document.querySelectorAll("a[data-arquivo]").forEach(function (a) {
+    a.addEventListener("click", function () { reg("baixou", a.getAttribute("data-arquivo")); });
+  });
+})();
+</script>
 </body>
 </html>
