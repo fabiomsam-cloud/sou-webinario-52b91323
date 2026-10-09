@@ -31,6 +31,10 @@
   var t = alvo.match(/[?&=\/ %]t(?:%3[Dd]|=)?([a-f0-9]{32})/) || alvo.match(/([a-f0-9]{32})/);
   var w = alvo.match(/w(?:%3[Dd]|=)([a-z0-9-]{2,30})/i);
 
+  var kit = dec.match(/materiais\/(kit-[a-z0-9-]+)/i);
+  if (kit) { // link pessoal do kit (09/10): token vai junto, nunca para a sala
+    location.replace(base + "materiais/" + kit[1] + "/" + (t ? "?t=" + t[1] : "")); return;
+  }
   if (t) {
     location.replace(base + "sala/?" + (w ? "w=" + w[1] + "&" : "") + "t=" + t[1]);
   } else if (/materiais/.test(alvo)) {

@@ -38,7 +38,9 @@
 // ou o salvo no navegador de quem entrou na sala. Nunca bloqueia a abertura do PDF.
 (function () {
   var W = "prf", qs = new URLSearchParams(location.search);
-  var t = qs.get("t") || (window.SW && SW.getToken ? SW.getToken(W) : null);
+  var cru = location.href, dec = cru; try { dec = decodeURIComponent(decodeURIComponent(cru)); } catch (e) {}
+  var m = (cru + " " + dec).match(/([a-f0-9]{32})/); // botão do WhatsApp às vezes mutila a query
+  var t = qs.get("t") || (m && m[1]) || (window.SW && SW.getToken ? SW.getToken(W) : null);
   function reg(acao, arquivo) {
     try {
       fetch(SW.API + "/material", { method: "POST", keepalive: true,
