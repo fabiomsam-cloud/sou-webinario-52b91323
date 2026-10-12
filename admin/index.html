@@ -266,7 +266,7 @@
       <div class="card"><h2>Funil</h2>
         <div class="kpis" id="kpis"></div>
         <div class="kpis" id="kpis-custos" style="margin-top:10px"></div>
-        <p class="muted" style="margin:8px 0 0">💬 Disparo = campanhas de carga na Anne (templates × tarifa). 📣 Meta = gasto real do Gerenciador; CAC/ROAS só de matrículas com clique pago rastreado (link compartilhado fica de fora). 🧮 Funil completo = Meta + disparos + régua sobre TODAS as matrículas do período. ROAS sempre sobre CONTRATOS.</p>
+        <p class="muted" style="margin:8px 0 0">💬 Disparo = campanhas de carga na Anne (templates × tarifa). 📣 Meta = gasto real do Gerenciador; CAC/ROAS só de matrículas com clique pago rastreado (link compartilhado fica de fora). 🧮 Funil completo = Meta + disparos + régua sobre TODAS as matrículas do período. ROAS = 1ª parcela recebida (líquida) ÷ verba — parcelas seguintes e valor de contrato não entram.</p>
         <div class="funil" id="funil" style="margin-top:16px"></div>
       </div>
       <div class="card"><h2>🎓 Matriculados — quem comprou, de onde veio e como pagou</h2>
@@ -819,9 +819,10 @@ function renderCustosCards(f, custos, gastoMeta, metaFalhou) {
   const reais = v => "R$ " + Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
   const x1 = v => v.toFixed(1).replace(".", ",") + "x";
   // CAC/ROAS de um canal: sem verba ou sem matrícula → "—" (nunca dividir por zero).
-  const par = (verba, mats, contratos) => {
+  // 11/10 (Fábio): ROAS = 1ª parcela recebida (líquida) ÷ verba — contrato não entra.
+  const par = (verba, mats, recebido) => {
     const cac = verba > 0 && mats > 0 ? reais(verba / mats) : "—";
-    const roas = verba > 0 && contratos > 0 ? x1(contratos / verba) : "—";
+    const roas = verba > 0 && recebido > 0 ? x1(recebido / verba) : "—";
     return `CAC ${cac} · ROAS ${roas}`;
   };
   const tile = (big, label, det) =>
@@ -829,9 +830,9 @@ function renderCustosCards(f, custos, gastoMeta, metaFalhou) {
 
   const dispCusto = Number(c.disparo_custo || 0), dispMsgs = Number(c.disparo_msgs || 0);
   const reguaCusto = Number(c.regua_custo || 0), reguaMsgs = Number(c.regua_msgs || 0);
-  const matDisp = Number(c.mat_disparo || 0), contDisp = Number(c.contratos_disparo || 0);
-  const matPago = Number(c.mat_pago || 0), contPago = Number(c.contratos_pago || 0);
-  const matTot = Number(f.matriculas || 0), contTot = Number(f.contratos || 0);
+  const matDisp = Number(c.mat_disparo || 0), contDisp = Number(c.receita_disparo || 0);
+  const matPago = Number(c.mat_pago || 0), contPago = Number(c.receita_pago || 0);
+  const matTot = Number(f.matriculas || 0), contTot = Number(f.receita || 0);
 
   const cards = [];
   cards.push(tile(reais(dispCusto), `💬 Disparos Anne (${dispMsgs.toLocaleString("pt-BR")} msgs · ${matDisp} matr.)`,
