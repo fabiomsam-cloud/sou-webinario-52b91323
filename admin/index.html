@@ -864,7 +864,7 @@ function renderMatriculados(rows) {
       const origem = [utm.utm_source, utm.utm_campaign].filter(Boolean).join(" · ") || "orgânico";
       const conteudo = [utm.utm_content, utm.utm_term].filter(Boolean).join(" › ");
       const pag = r.forma === "parcela"
-        ? `<span style="color:var(--gold)">📅 Parcelamento inteligente</span><br><span class="muted">parcela ${r.parcela_atual ?? 1}/${r.parcela_total ?? "?"} de ${fmtR$(r.valor_bruto)} · ${r.metodo ?? ""}</span>`
+        ? `<span style="color:var(--gold)">📅 Parcelamento inteligente</span><br><span class="muted">1ª parcela de ${r.parcela_total ?? "?"} · ${fmtR$(r.valor_bruto)} · ${r.metodo ?? ""}</span>`
         : `<span style="color:var(--acc)">💳 Valor cheio</span><br><span class="muted">${fmtR$(r.valor_bruto)} · ${r.metodo ?? ""}</span>`;
       const pct = durVid ? Math.min(100, Math.round((r.assistiu_seconds || 0) / durVid * 100)) : null;
       const jornada = fmtMin(r.assistiu_seconds || 0) + (pct != null ? ` (${pct}%)` : "") +
@@ -880,7 +880,7 @@ function renderMatriculados(rows) {
         <td>${fmtDT(r.matriculado_at)}<br><span class="muted">${(r.produto || "").replace("ELITE TRIBUNAL DE JUSTIÇA", "Elite TJ")}</span></td>
       </tr>`;
     }).join("") + "</tbody></table>" +
-    '<p class="muted" style="margin-top:8px">📅 Parcelamento inteligente: a Hubla recebe parcela a parcela — o "Recebido" é só a parcela paga; o "Contrato" é o valor de face total. 💳 Valor cheio: caiu tudo de uma vez (mesmo que o aluno parcele no cartão dele).</p>';
+    '<p class="muted" style="margin-top:8px">📅 Parcelamento inteligente: a Hubla recebe parcela a parcela — matrícula = 1ª parcela paga (parcelas seguintes não entram na plataforma); o "Recebido" é essa 1ª parcela e o "Contrato" é o valor de face total. 💳 Valor cheio: caiu tudo de uma vez (mesmo que o aluno parcele no cartão dele).</p>';
 }
 
 // ---------- analytics do player (Vturb) ----------
