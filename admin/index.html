@@ -266,6 +266,9 @@
       <div class="card"><h2>Funil</h2>
         <div class="kpis" id="kpis"></div>
         <div class="kpis" id="kpis-custos" style="margin-top:10px"></div>
+        <div style="margin:16px 0 6px;font-weight:700;color:var(--gold)">🤝 Vendas de leads do webinário — por quem fechou (CAC sobre a verba do funil completo)</div>
+        <div class="kpis" id="kpis-vendas"></div>
+        <p class="muted" style="margin:8px 0 0">Só leads que se cadastraram no webinário ANTES de comprar, qualquer produto da família (inclui 02 ANOS e compra sem pitch — por isso pode passar do KPI Matrículas). Canal = quem fechou: ☎️ humano = posse do Comercial Humano, link enviado por humano no Inbox ou UTM de inside sales/CS; 🤖 IA + botão = link enviado pela Anne IA/blindado ou clique no botão da oferta (UTM webinario/anne); outros = grupo, site, disparo e sem UTM (entram só no Geral). CAC = (Meta + disparos + régua) ÷ vendas do canal; ROAS = 1ª parcela recebida ÷ verba. Atualiza a cada 30 min (n8n SOUWEB · Vendas Canais).</p>
         <p class="muted" style="margin:8px 0 0">💬 Disparo = campanhas de carga na Anne (templates × tarifa). 📣 Meta = gasto real do Gerenciador; CAC/ROAS só de matrículas com clique pago rastreado (link compartilhado fica de fora). 🧮 Funil completo = Meta + disparos + régua sobre TODAS as matrículas do período. ROAS = 1ª parcela recebida (líquida) ÷ verba — parcelas seguintes e valor de contrato não entram.</p>
         <div class="funil" id="funil" style="margin-top:16px"></div>
       </div>
@@ -766,6 +769,9 @@ async function carregarDash() {
 
   // custos por canal (disparo/régua via n8n) — alimenta os cards de verba/CAC/ROAS
   const { data: custos } = await sb.rpc("fn_admin_custos", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
+  // vendas por canal de leads do webinário (migration 43, n8n SOUWEB · Vendas Canais)
+  const { data: vendas } = await sb.rpc("fn_admin_vendas_canais", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
+  vendasCache = vendas || {};
   renderCustosCards(f, custos, null); // Meta ainda carregando → card mostra "…"
 
   const { data: og } = await sb.rpc("fn_admin_origens", { p_webinar: W.id, p_de: pDe, p_ate: pAte });
@@ -849,6 +855,37 @@ function renderCustosCards(f, custos, gastoMeta, metaFalhou) {
     `🧮 Funil completo (${matTot} matr. · régua ${reguaMsgs.toLocaleString("pt-BR")} msgs ${reais(reguaCusto)})`,
     gastoMeta == null && !metaFalhou ? "carregando…" : par(invest, matTot, contTot)));
   el.innerHTML = cards.join("");
+  renderVendasCards(invest, gastoMeta == null && !metaFalhou);
+}
+
+// ---------- vendas de leads do webinário por quem fechou (geral · Anne IA + botão · humanos) ----------
+// invest = Meta + disparos + régua (mesma verba do "Funil completo"); carregando = Meta ainda não respondeu.
+let vendasCache = null;
+function renderVendasCards(invest, carregando) {
+  const el = $("kpis-vendas");
+  if (!el) return;
+  const v = vendasCache || {};
+  const reais = x => "R$ " + Number(x || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+  const x1 = x => x.toFixed(1).replace(".", ",") + "x";
+  const g = v.geral || {}, ia = v.ia || {}, hu = v.humano || {}, ou = v.outros || {};
+  const par = (n, rec) => carregando ? "carregando verba…"
+    : `CAC ${invest > 0 && n > 0 ? reais(invest / n) : "—"} · ROAS ${invest > 0 && rec > 0 ? x1(rec / invest) : "—"}`;
+  const tile = (big, label, det) =>
+    `<div class="kpi"><b>${big}</b><span>${label}<br><em style="font-style:normal;color:var(--gold)">${det}</em></span></div>`;
+  const det = (o, extra) => `${par(Number(o.n || 0), Number(o.receita || 0))}<br>` +
+    `<span class="muted">${reais(o.receita)} recebido · ${o.pitch || 0} viram o pitch${extra ? " · " + extra : ""}</span>`;
+  const dets = v.detalhes || [];
+  const nDet = (canal, d) => dets.filter(x => x.canal === canal && x.detalhe === d).reduce((t, x) => t + Number(x.n || 0), 0);
+  const botao = nDet("ia", "botao_webinario");
+  const fora = Number(g.n || 0) - Number(g.no_kpi || 0);
+  const vend = (v.vendedores || []).map(x => `${x.vendedor || "?"} ${x.n}`).join(" · ");
+  el.innerHTML = [
+    tile(String(g.n || 0), "🤝 Geral — todos os canais",
+      det(g, `${fora} fora do KPI Matrículas${ou.n ? " · outros canais " + ou.n : ""}`)),
+    tile(String(ia.n || 0), "🤖 Anne IA + botão do webinário",
+      det(ia, `botão ${botao} · Anne ${Number(ia.n || 0) - botao}`)),
+    tile(String(hu.n || 0), "☎️ Vendedores humanos", det(hu, vend || "—")),
+  ].join("");
 }
 
 // ---------- quadro de matriculados ----------
