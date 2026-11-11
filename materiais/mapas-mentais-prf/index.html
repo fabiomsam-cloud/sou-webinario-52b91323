@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mapas Mentais da PRF — Legislação de Trânsito</title>
+  <!-- Prévia do link no WhatsApp/Meta: título + capa -->
+  <meta property="og:title" content="Mapas Mentais da PRF — Legislação de Trânsito">
+  <meta property="og:description" content="Os mapas mentais de Legislação de Trânsito do Prof. Fábio Silva para a PRF. Material oficial do Sou Concurseiro e Vou Passar.">
+  <meta property="og:image" content="https://fabiomsam-cloud.github.io/sou-webinario-52b91323/materiais/mapas-mentais-prf-857d92a3.jpg">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fabiomsam-cloud.github.io/sou-webinario-52b91323/materiais/mapas-mentais-prf/">
+  <style>
+    body{margin:0;background:#0b1020;color:#e8ecf8;font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+         min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px 16px}
+    .box{max-width:460px;width:100%}
+    img{max-width:100%;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+    h1{font-size:1.15rem;margin:18px 0 6px}
+    p{color:#9aa4bf;font-size:.92rem;margin:0 0 18px}
+    a.btn{display:block;background:#22c55e;color:#04140a;font-weight:700;text-decoration:none;
+          padding:14px 20px;border-radius:12px;font-size:1rem;margin:0 0 12px}
+    small{display:block;color:#6b7593;font-size:.78rem;margin-top:6px}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <img src="../mapas-mentais-prf-857d92a3.jpg" alt="Mapas Mentais da PRF">
+    <h1>Mapas Mentais da PRF</h1>
+    <p>Seus mapas mentais de Legislação de Trânsito estão aqui. Toque no botão para abrir a pasta:</p>
+    <a class="btn" data-arquivo="mapas" href="https://drive.google.com/drive/folders/17Q8P7Gz03sFaB9QESdRfMU9-lD_MizoY?usp=sharing">🎯 ABRIR OS MAPAS MENTAIS</a>
+    <small>Dica: salve os mapas no seu celular para revisar mesmo sem internet.</small>
+  </div>
+<script src="../../assets/app.js"></script>
+<script>
+// Registra quem abriu a página e quem tocou no botão dos mapas (11/11). Token: link pessoal (?t=)
+// ou o salvo no navegador de quem entrou na sala. Nunca bloqueia a abertura da pasta.
+(function () {
+  var W = "prfblack", qs = new URLSearchParams(location.search);
+  var cru = location.href, dec = cru; try { dec = decodeURIComponent(decodeURIComponent(cru)); } catch (e) {}
+  var m = (cru + " " + dec).match(/([a-f0-9]{32})/); // botão do WhatsApp às vezes mutila a query
+  var t = qs.get("t") || (m && m[1]) || (window.SW && SW.getToken ? SW.getToken(W) : null);
+  function reg(acao, arquivo) {
+    try {
+      fetch(SW.API + "/material", { method: "POST", keepalive: true,
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + SW.KEY },
+        body: JSON.stringify({ w: W, t: t, acao: acao, arquivo: arquivo || null, o: qs.get("o") || null }) });
+    } catch (e) {}
+  }
+  reg("abriu");
+  document.querySelectorAll("a[data-arquivo]").forEach(function (a) {
+    a.addEventListener("click", function () { reg("baixou", a.getAttribute("data-arquivo")); });
+  });
+})();
+</script>
+</body>
+</html>
