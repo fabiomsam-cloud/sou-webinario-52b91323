@@ -896,7 +896,26 @@ function renderMatriculados(rows) {
   const fmtMin = s => s >= 3600 ? Math.floor(s / 3600) + "h" + String(Math.floor(s % 3600 / 60)).padStart(2, "0") : Math.floor(s / 60) + "min";
   const fmtR$ = n => n == null ? "—" : "R$ " + Number(n).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
   const durVid = (W.duration_seconds || 0);
-  el.innerHTML = "<table><thead><tr><th>Comprador</th><th>Pagamento</th><th>Recebido (líq.)</th><th>Contrato</th><th>Cadastro</th><th>Origem (UTM)</th><th>Assistiu</th><th>Matrícula</th></tr></thead><tbody>" +
+  // 11/11: quadro por mentoria (webinário com várias mentorias, ex.: revolucao = 8 da Black).
+  // Sai do próprio retorno de fn_admin_matriculados (campo produto); aparece quando há mais de
+  // uma mentoria no período ou sempre no revolucao.
+  const nomeMent = p => (p || "Sem produto").replace(/\s*\+\s*DOMINEI.*$/i, "").replace(/\s+/g, " ").trim()
+    .replace("ELITE TRIBUNAL DE JUSTIÇA DO AMAZONAS", "ELITE TJ-AM").replace("ELITE POLÍCIA CIVIL DO AMAZONAS", "ELITE PC-AM")
+    .replace("ELITE POLÍCIA MILITAR DO AMAZONAS", "ELITE PM-AM");
+  const porMent = {};
+  rows.forEach(r => {
+    const m = porMent[nomeMent(r.produto)] ||= { n: 0, liq: 0, contrato: 0, parc: 0 };
+    m.n++; m.liq += Number(r.valor_liquido || 0); m.contrato += Number(r.valor_contrato || 0);
+    if (r.forma === "parcela") m.parc++;
+  });
+  const ments = Object.entries(porMent).sort((a, b) => b[1].n - a[1].n || b[1].liq - a[1].liq);
+  const totN = rows.length, totLiq = ments.reduce((t, [, m]) => t + m.liq, 0), totCon = ments.reduce((t, [, m]) => t + m.contrato, 0);
+  const quadroMent = (ments.length > 1 || W.slug === "revolucao")
+    ? `<table style="margin-bottom:14px"><thead><tr><th>Mentoria</th><th>Matrículas</th><th>% das matrículas</th><th>Recebido (líq.)</th><th>Em contratos</th><th>Parcelamento inteligente</th></tr></thead><tbody>` +
+      ments.map(([nome, m]) => `<tr><td><b>${nome}</b></td><td><b>${m.n}</b></td><td>${Math.round(m.n / totN * 100)}%</td><td><b>${fmtR$(m.liq)}</b></td><td>${fmtR$(m.contrato)}</td><td>${m.parc || "—"}</td></tr>`).join("") +
+      `<tr><td><b>Total</b></td><td><b>${totN}</b></td><td>100%</td><td><b>${fmtR$(totLiq)}</b></td><td>${fmtR$(totCon)}</td><td>${ments.reduce((t, [, m]) => t + m.parc, 0) || "—"}</td></tr></tbody></table>`
+    : "";
+  el.innerHTML = quadroMent + "<table><thead><tr><th>Comprador</th><th>Pagamento</th><th>Recebido (líq.)</th><th>Contrato</th><th>Cadastro</th><th>Origem (UTM)</th><th>Assistiu</th><th>Matrícula</th></tr></thead><tbody>" +
     rows.map(r => {
       const utm = r.utm || {};
       const origem = [utm.utm_source, utm.utm_campaign].filter(Boolean).join(" · ") || "orgânico";
