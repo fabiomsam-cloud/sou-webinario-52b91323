@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Seu material · Sou Concurseiro e Vou Passar</title>
+<style>
+  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+         font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #0f1b2d; color: #fff; text-align: center; padding: 24px; }
+  a { color: #7fe3a1; }
+</style>
+</head>
+<body>
+<p id="msg">Abrindo o seu material…</p>
+<script>
+// Porta única do botão "BAIXAR MEU MATERIAL" (modelo webinario_material_entrega, 13/11/2026).
+// O botão do WhatsApp só aceita um trecho variável no fim do endereço, então ele chega aqui como
+// materiais/?m=<pasta-do-material>&t=<token>&o=auto e esta página leva para materiais/<pasta>/.
+// Só aceita nome de pasta simples (letras minúsculas, números e hífen): nunca redireciona para fora do site.
+(function () {
+  var cru = location.href, dec = cru;
+  try { dec = decodeURIComponent(decodeURIComponent(cru)); } catch (e) {}
+  var qs = new URLSearchParams(location.search);
+  var m = qs.get("m") || ((dec.match(/[?&]m=([a-z0-9-]+)/) || [])[1]) || "";
+  var t = qs.get("t") || ((dec.match(/([a-f0-9]{32})/) || [])[1]) || "";
+  var o = qs.get("o") || "auto";
+  if (/^[a-z0-9][a-z0-9-]{1,60}$/.test(m)) {
+    location.replace("./" + m + "/?t=" + encodeURIComponent(t) + "&o=" + encodeURIComponent(o));
+  } else {
+    document.getElementById("msg").innerHTML =
+      "Não encontrei o material deste link. Fale com a Anne no WhatsApp <a href=\"https://wa.me/559231999420\">(92) 3199-9420</a> que ela te envia.";
+  }
+})();
+</script>
+</body>
+</html>
