@@ -35,6 +35,19 @@
   if (kit) { // link pessoal do kit (09/10): token vai junto, nunca para a sala
     location.replace(base + "materiais/" + kit[1] + "/" + (t ? "?t=" + t[1] : "")); return;
   }
+  // Material do webinário (13/11): o botão BAIXAR MEU MATERIAL chega como materiais/<pasta>/?t=…&o=…
+  // ou, sem a interrogação que a Meta tira, como materiais/m=<pasta>&t=…&o=… — nunca vai para a sala.
+  var mat = dec.match(/materiais\/\??m=([a-z0-9][a-z0-9-]{1,60})/i) ||
+            dec.match(/materiais\/([a-z0-9][a-z0-9-]{1,60})\/?(?:[?&]|$)/i);
+  if (mat) {
+    var pasta = mat[1].toLowerCase();
+    var o = (dec.match(/[?&]o=([a-z0-9_-]{1,20})/i) || [])[1] || "auto";
+    if (location.pathname === base + "materiais/" + pasta + "/") { // a pasta não existe: não fica em laço
+      document.getElementById("txt").textContent = "Material não encontrado — fale com a Anne no WhatsApp que ela reenvia o link.";
+      return;
+    }
+    location.replace(base + "materiais/" + pasta + "/?" + (t ? "t=" + t[1] + "&" : "") + "o=" + o); return;
+  }
   if (t) {
     location.replace(base + "sala/?" + (w ? "w=" + w[1] + "&" : "") + "t=" + t[1]);
   } else if (/materiais/.test(alvo)) {
