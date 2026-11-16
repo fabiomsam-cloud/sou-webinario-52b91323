@@ -71,7 +71,7 @@
   .quiz-perg{font-weight:700;font-size:clamp(1.05rem,3.6vw,1.25rem);line-height:1.3;letter-spacing:-.01em;margin-bottom:10px}
   .quiz-ops{display:flex;flex-direction:column;gap:8px}
   .quiz-op{font-family:inherit;font-size:1rem;line-height:1.3;text-align:left;color:var(--ink);background:var(--paper);border:1.5px solid #d6d6d6;border-radius:12px;padding:13px 14px;min-height:48px;cursor:pointer;transition:border-color .12s,background .12s,transform .08s;-webkit-tap-highlight-color:transparent}
-  .quiz-op:hover{border-color:var(--red);background:var(--soft)}
+  @media(hover:hover){.quiz-op:hover{border-color:var(--red);background:var(--soft)}} /* no toque, o realce não gruda na opção seguinte */
   .quiz-op:active{transform:scale(.99)}
   .quiz-op:focus-visible{outline:3px solid rgba(255,0,0,.25);outline-offset:2px}
   .quiz-op.sel{border-color:var(--red);background:var(--soft);font-weight:700}
