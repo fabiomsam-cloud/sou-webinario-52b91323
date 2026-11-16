@@ -55,6 +55,31 @@
   .wa-card b{color:var(--ink)}
   .wa-ico{width:38px;height:38px;border-radius:50%;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex:none}
 
+  /* ===== quiz da sala de espera (16/11/2026) =====
+     Com quiz, a tela da contagem encolhe (sem imagem do material e sem as frases que trocam) para a
+     pergunta caber na primeira dobra do celular. A contagem continua visível o tempo todo. */
+  .premiere.com-quiz .pre-screen{min-height:0;padding:20px 18px 18px}
+  .premiere.com-quiz .premio,.premiere.com-quiz .micro{display:none!important}
+  .premiere.com-quiz .pre-tag{margin-bottom:8px}
+  .premiere.com-quiz .count{font-size:clamp(2.4rem,9vw,3.6rem)}
+  .quiz{display:none;border:1px solid var(--line);border-radius:14px;background:var(--paper);box-shadow:0 10px 30px rgba(15,15,15,.08);padding:16px 16px 18px;margin-top:12px;text-align:left;animation:rise .4s ease both}
+  .quiz-top{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.74rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--red)}
+  .quiz-passo{color:var(--gray);font-weight:500;letter-spacing:.02em;text-transform:none;font-size:.8rem;white-space:nowrap}
+  .quiz-chamada{font-size:.9rem;line-height:1.45;color:var(--carbon);margin-top:6px}
+  .quiz-barra{height:4px;border-radius:4px;background:var(--mist);margin:12px 0 14px;overflow:hidden}
+  .quiz-barra i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--magenta));border-radius:4px;transition:width .3s ease}
+  .quiz-perg{font-weight:700;font-size:clamp(1.05rem,3.6vw,1.25rem);line-height:1.3;letter-spacing:-.01em;margin-bottom:10px}
+  .quiz-ops{display:flex;flex-direction:column;gap:8px}
+  .quiz-op{font-family:inherit;font-size:1rem;line-height:1.3;text-align:left;color:var(--ink);background:var(--paper);border:1.5px solid #d6d6d6;border-radius:12px;padding:13px 14px;min-height:48px;cursor:pointer;transition:border-color .12s,background .12s,transform .08s;-webkit-tap-highlight-color:transparent}
+  .quiz-op:hover{border-color:var(--red);background:var(--soft)}
+  .quiz-op:active{transform:scale(.99)}
+  .quiz-op:focus-visible{outline:3px solid rgba(255,0,0,.25);outline-offset:2px}
+  .quiz-op.sel{border-color:var(--red);background:var(--soft);font-weight:700}
+  .quiz-fim-tit{font-weight:700;font-size:clamp(1.1rem,3.8vw,1.3rem);line-height:1.3;margin-top:10px}
+  .quiz-fim-txt{font-size:.95rem;line-height:1.5;color:var(--carbon);margin-top:6px}
+  .quiz-dica{margin-top:12px;border-left:4px solid var(--red);background:var(--soft);border-radius:0 10px 10px 0;padding:10px 12px;font-size:.92rem;line-height:1.45}
+  .quiz-dica b{display:block;font-size:.74rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gray);font-weight:700;margin-bottom:2px}
+
   /* ===== sala aberta — watch page ===== */
   .sala{display:none;max-width:1280px;margin:0 auto;padding:16px}
   .sala.aberta{display:block} /* via classe — inline style mataria o flex do modo-live */
@@ -140,6 +165,7 @@
       <img id="premio" class="premio" style="display:none" alt="Material da aula">
       <div class="pre-hint">Você entrará automaticamente — fique nesta página.</div>
     </div>
+    <div class="quiz" id="quiz" aria-live="polite"></div>
     <div class="pre-meta">
       <div class="avatar">F</div>
       <div>
@@ -273,6 +299,89 @@
       var img = document.getElementById("premio");
       img.src = cfg.espera_imagem;
       img.style.display = "block";
+    }
+
+    // Quiz da sala de espera (16/11/2026): perguntas de um toque enquanto a aula não começa. A contagem
+    // segue visível e a aula abre no horário, com ou sem resposta. Cada toque grava na hora (manda todas
+    // as respostas dadas até ali), então resposta pela metade também vale. Quem volta à página continua
+    // de onde parou. O servidor só manda cfg.quiz para lead com ensino superior em webinário com quiz ligado.
+    if (cfg.quiz && Array.isArray(cfg.quiz.perguntas) && cfg.quiz.perguntas.length) {
+      const Q = cfg.quiz, pergs = Q.perguntas, resp = Object.assign({}, Q.respostas || {});
+      const box = document.getElementById("quiz");
+      const el = function (tag, cls, txt) {
+        const e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (txt != null) e.textContent = txt;
+        return e;
+      };
+      const primeiro = cfg.lead_name ? String(cfg.lead_name).trim().split(/\s+/)[0] : "";
+      const comNome = function (s) {
+        s = String(s || "");
+        return primeiro ? s.replace("{nome}", primeiro) : s.replace(/,?\s*\{nome\}/, "");
+      };
+      function gravar() {
+        try {
+          fetch(SW.API + "/quiz", { method: "POST", keepalive: true,
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + SW.KEY },
+            body: JSON.stringify({ t: token, respostas: resp }) }).catch(function () {});
+        } catch (e) {}
+      }
+      function cabecalho(passo, pct) {
+        box.textContent = "";
+        const top = el("div", "quiz-top");
+        top.appendChild(el("span", null, Q.titulo || "Enquanto a aula não começa"));
+        if (passo) top.appendChild(el("span", "quiz-passo", passo));
+        box.appendChild(top);
+        return pct;
+      }
+      function barra(pct) {
+        const b = el("div", "quiz-barra"), i = el("i");
+        b.appendChild(i); box.appendChild(b);
+        setTimeout(function () { i.style.width = pct + "%"; }, 30);
+      }
+      function pergunta(n) {
+        const p = pergs[n];
+        cabecalho((n + 1) + " de " + pergs.length);
+        if (Q.chamada) box.appendChild(el("p", "quiz-chamada", Q.chamada));
+        barra(Math.round(n / pergs.length * 100));
+        box.appendChild(el("div", "quiz-perg", p.texto));
+        const ops = el("div", "quiz-ops");
+        (p.opcoes || []).forEach(function (o) {
+          const b = el("button", "quiz-op", o.rotulo);
+          b.type = "button";
+          b.addEventListener("click", function () {
+            if (resp[p.id] === o.valor && b.disabled) return;
+            resp[p.id] = o.valor;
+            ops.querySelectorAll("button").forEach(function (x) { x.disabled = true; });
+            b.classList.add("sel");
+            gravar();
+            setTimeout(function () {
+              const prox = pergs.findIndex(function (x) { return !resp[x.id]; });
+              if (prox === -1) fim(); else pergunta(prox);
+            }, 260);
+          });
+          ops.appendChild(b);
+        });
+        box.appendChild(ops);
+      }
+      function fim() {
+        const F = Q.final || {};
+        cabecalho(null);
+        barra(100);
+        box.appendChild(el("div", "quiz-fim-tit", comNome(F.titulo || "Pronto, {nome}. Seu plano está sendo montado.")));
+        box.appendChild(el("p", "quiz-fim-txt", F.texto || "Ele chega no seu WhatsApp assim que a aula terminar."));
+        const p0 = pergs[0], o0 = (p0.opcoes || []).find(function (o) { return o.valor === resp[p0.id]; });
+        if (o0 && o0.dica) {
+          const d = el("div", "quiz-dica");
+          d.appendChild(el("b", null, F.dica || "Na aula, preste atenção especial em:"));
+          d.appendChild(document.createTextNode(o0.dica));
+          box.appendChild(d);
+        }
+      }
+      document.querySelector(".premiere").classList.add("com-quiz");
+      box.style.display = "block";
+      const inicio = pergs.findIndex(function (x) { return !resp[x.id]; });
+      if (inicio === -1) fim(); else pergunta(inicio);
     }
     return;
   }
