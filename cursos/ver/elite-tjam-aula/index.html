@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Elite TJ-AM · trecho da aula</title>
+<meta name="description" content="O trecho da aula do TJ-AM em que o professor Fábio mostra o plano de batalha e a condição de quem assistiu.">
+<meta property="og:title" content="O problema não é você. É o método.">
+<meta property="og:description" content="Assista ao trecho da aula do TJ-AM com o plano de batalha do professor Fábio.">
+<meta property="og:image" content="https://fabiomsam-cloud.github.io/sou-webinario-52b91323/cursos/ver/elite-tjam-aula/og.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!--
+  Página de vídeo do Elite TJ-AM para quem saiu da aula sem ver a oferta (pontes P4/P5 da interligação dos funis)
+  e para o remarketing. 16/11/2026. Regra do Fábio: lead da aula NUNCA vai para o site (o 12x 99,75 não está lá).
+  - Vídeo: trecho da aula nova de 42:05 a 63:04 ("o problema não é você" até o fim da condição). Preço dito aos 15:05 do trecho.
+  - Vturb: colar o código do player dentro de <template id="vturb-embed"> no fim do arquivo. Sem ele, a página usa o
+    arquivo de prévia local (_previa/, fora do git).
+  - A condição aparece quando o vídeo passa de MOSTRAR_EM segundos (fica guardada no navegador; ?mostrar=1 força).
+  - Botão: abre o pop-up (nome, e-mail, WhatsApp) que manda o lead para a régua do blindado da Anne (produto pela
+    página: slug "elite-tjam-aula" em products.metadata.page_slugs do TJAM_ELITE_001) e segue para o checkout da aula.
+-->
+<style>
+:root{--navy:#0a1222;--navy2:#13213d;--ouro:#e8b84a;--amarelo:#ffd23f;--texto:#e7ecf5;--suave:#9fb0cc;--borda:rgba(232,184,74,.35)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--navy)}
+body{font-family:Inter,Arial,sans-serif;color:var(--texto);background:radial-gradient(120% 60% at 80% 0%,#1d3157 0%,var(--navy) 55%);min-height:100vh;line-height:1.5}
+.wrap{max-width:860px;margin:0 auto;padding:22px 16px 64px}
+.topo{display:flex;align-items:center;justify-content:space-between;gap:12px;font:800 13px/1 Inter;letter-spacing:.16em;text-transform:uppercase;color:var(--ouro)}
+.topo span:last-child{color:var(--suave);font-weight:600;letter-spacing:.06em;text-transform:none}
+h1{font:900 clamp(30px,6vw,52px)/1.05 Inter;letter-spacing:-.02em;margin:22px 0 12px}
+h1 em{font-style:normal;color:var(--amarelo)}
+.sub{font-size:clamp(16px,2.6vw,19px);color:var(--suave);max-width:680px}
+.video{margin:24px 0 12px;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 18px 50px rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.08);position:relative}
+.video video{aspect-ratio:16/9}
+.video video{width:100%;height:100%;display:block;background:#000}
+.som{font-size:14px;color:var(--suave);text-align:center}
+.espera{margin:22px auto 0;max-width:620px;text-align:center;font-size:15px;color:var(--suave);border:1px dashed rgba(159,176,204,.35);border-radius:12px;padding:14px 16px}
+.oferta{display:none;margin-top:28px;border:1px solid var(--borda);border-radius:18px;background:linear-gradient(180deg,rgba(19,33,61,.9),rgba(10,18,34,.95));padding:28px 22px}
+.oferta.on{display:block;animation:sobe .5s ease}
+@keyframes sobe{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.selo{display:inline-block;font:800 12px/1 Inter;letter-spacing:.14em;text-transform:uppercase;color:var(--navy);background:var(--ouro);padding:9px 12px;border-radius:6px}
+.oferta h2{font:900 clamp(26px,5vw,40px)/1.08 Inter;margin:16px 0 6px;letter-spacing:-.01em}
+.preco{white-space:nowrap;font:900 clamp(34px,9.4vw,64px)/1 Inter;color:var(--amarelo);margin:14px 0 4px;letter-spacing:-.02em}
+.preco small{display:block;margin-top:8px;font-size:18px;font-weight:800;color:var(--texto)}
+.avista{color:var(--suave);font-size:15px}
+.cta{display:block;text-align:center;text-decoration:none;font:900 clamp(17px,3.4vw,21px)/1.2 Inter;color:var(--navy);background:var(--amarelo);padding:20px 18px;border-radius:14px;box-shadow:0 7px 0 #b8901d;margin:24px 0 10px;transition:transform .08s}
+.cta:active{transform:translateY(3px);box-shadow:0 4px 0 #b8901d}
+.garantia{display:flex;gap:12px;align-items:flex-start;font-size:15px;color:var(--texto);background:rgba(232,184,74,.08);border-radius:12px;padding:14px}
+.garantia b{color:var(--ouro)}
+.inclui{margin-top:26px;display:grid;gap:12px}
+.inclui div{position:relative;padding-left:30px;font-size:16px}
+.inclui div:before{content:"";position:absolute;left:0;top:7px;width:14px;height:14px;border-radius:4px;background:var(--ouro)}
+.inclui b{color:#fff}
+.rodape{margin-top:40px;text-align:center;font-size:13px;color:#6f7f9c}
+/* pop-up */
+.mOv{position:fixed;inset:0;background:rgba(3,7,15,.78);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.mOv.on{display:flex}
+.mBox{background:#fff;color:#0a1222;border-radius:16px;max-width:430px;width:100%;padding:26px 22px 22px;position:relative}
+.mBox h3{font:900 22px/1.2 Inter;margin-bottom:6px}
+.mBox p{font-size:14px;color:#4a5872;margin-bottom:16px}
+.mBox label{display:block;font:700 13px/1 Inter;margin:12px 0 6px}
+.mBox input{width:100%;font:500 16px Inter;padding:13px 12px;border:1.5px solid #cdd5e3;border-radius:10px}
+.mBox input.err{border-color:#d33}
+.mBox button[type=submit]{width:100%;margin-top:18px;font:900 17px Inter;color:#0a1222;background:var(--amarelo);border:0;border-radius:12px;padding:16px;cursor:pointer;box-shadow:0 5px 0 #b8901d}
+.mBox button[disabled]{opacity:.7}
+.mX{position:absolute;right:12px;top:8px;border:0;background:none;font-size:28px;color:#8a95ab;cursor:pointer}
+.mSeg{font-size:12px;color:#7a869c;text-align:center;margin-top:12px}
+</style>
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','639941435037052');fbq('track','PageView');
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topo"><span>Elite TJ-AM</span><span>Trecho da aula</span></div>
+  <h1>O problema não é você. <em>É o método.</em></h1>
+  <p class="sub">Assista ao trecho da aula em que o professor Fábio mostra o plano de batalha para o concurso do Tribunal de Justiça do Amazonas e a condição de quem assistiu.</p>
+
+  <div class="video" id="video"></div>
+  <p class="som">Ative o som e assista até o fim.</p>
+  <p class="espera" id="espera">A condição de matrícula aparece aqui embaixo durante o vídeo.</p>
+
+  <section class="oferta" id="oferta" aria-live="polite">
+    <span class="selo">Condição da aula</span>
+    <h2>Elite TJ-AM · 1 ano de mentoria</h2>
+    <p class="avista" style="font-size:16px">Analista e assistente na mesma preparação.</p>
+    <div class="preco">12x de R$ 99,75 <small>no cartão</small></div>
+    <p class="avista">ou R$ 997 à vista no Pix</p>
+    <a class="cta" href="https://pay.hub.la/LpPxzYNyDtwXdsAGhFDO?utm_source=pagina-aula-tjam&amp;utm_medium=vsl&amp;utm_campaign=elite-tjam-aula">QUERO GARANTIR MINHA VAGA NO ELITE TJ-AM</a>
+    <div class="garantia"><span>🛡️</span><span><b>7 dias de garantia.</b> Entre, baixe as apostilas, assista às aulas. Se não for para você, peça o cancelamento e o valor volta 100%.</span></div>
+    <div class="inclui">
+      <div><b>Plano de estudos individual</b>, montado com as horas que você tem e só com os assuntos Ovos de Ouro.</div>
+      <div><b>Videoaula, e-book e questões</b> de cada assunto, com a Anne resumindo as aulas e entregando apostila e mapa mental.</div>
+      <div><b>Aulas de como estudar:</b> foco, sono e técnicas de memorização.</div>
+      <div><b>Simulados do TJ-AM</b> no modelo da prova, com acompanhamento.</div>
+      <div><b>Spot Fábio</b> (músicas do conteúdo) e <b>Sou Questões</b> no celular, para estudar no trânsito e na academia.</div>
+      <div><b>Mentalidade do Aprovado</b>, com psicóloga, e os e-books do professor.</div>
+      <div><b>Estude Comigo TJ-AM:</b> a legislação do tribunal com o professor Fábio.</div>
+    </div>
+    <a class="cta" href="https://pay.hub.la/LpPxzYNyDtwXdsAGhFDO?utm_source=pagina-aula-tjam&amp;utm_medium=vsl&amp;utm_campaign=elite-tjam-aula">QUERO GARANTIR MINHA VAGA NO ELITE TJ-AM</a>
+  </section>
+
+  <p class="rodape">Sou Concurseiro e Vou Passar</p>
+</div>
+
+<div class="mOv" id="mOv" role="dialog" aria-modal="true" aria-labelledby="mTit">
+  <div class="mBox">
+    <button type="button" class="mX" id="mX" aria-label="Fechar">&times;</button>
+    <h3 id="mTit">Falta pouco para garantir sua vaga</h3>
+    <p>Preencha para seguir ao pagamento. Se travar em alguma etapa, a Anne te chama no WhatsApp para ajudar.</p>
+    <form id="mForm" novalidate>
+      <label for="mNome">Nome completo</label><input id="mNome" autocomplete="name">
+      <label for="mEmail">E-mail</label><input id="mEmail" type="email" autocomplete="email" inputmode="email">
+      <label for="mWhats">WhatsApp com DDD</label><input id="mWhats" type="tel" autocomplete="tel" inputmode="tel" placeholder="(92) 99999-9999">
+      <button type="submit" id="mBtn">Continuar para o pagamento →</button>
+    </form>
+    <div class="mSeg">Seus dados ficam só com a nossa equipe.</div>
+  </div>
+</div>
+
+<!-- Player do Vturb (vid-6afb8c43c6a6c936efc51ec3, enviado pelo Fábio em 16/11). -->
+<template id="vturb-embed"><vturb-smartplayer id="vid-6afb8c43c6a6c936efc51ec3" style="display: block; margin: 0 auto; width: 100%; "><div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 56.25% 0 0; z-index: 0; background-color: black;"></div></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/98f98845-02a5-4e75-a39a-bbafedfa3212/players/6afb8c43c6a6c936efc51ec3/v4/player.js", s.async=!0,document.head.appendChild(s); </script></template>
+
+<script>
+(function(){
+  var MOSTRAR_EM = 900;                         // segundos do trecho: o preço é dito aos 905 s
+  var PREVIA = '_previa/VSL-pagina-TJAM-previa-720p.mp4';
+  var WEBHOOK = 'https://webhook2.manager01.scvpgti.com.br/webhook/2d9b0f1a-acc2-4111-abf4-2b2b4a110ad2';
+  var CHAVE = 'tjam_aula_oferta_v1';
+  var q = new URLSearchParams(location.search);
+
+  // ---- UTM: guarda a do visitante e troca a fixa do link do checkout (mesma regra do pop-up do site)
+  var UTM_KEYS = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','fbclid'], UTM_STORE = 'scvp_utm_v1';
+  function getUtms(){
+    var o = {}; UTM_KEYS.forEach(function(k){ o[k] = q.get(k) || ''; });
+    var tem = UTM_KEYS.some(function(k){ return o[k]; });
+    try { if (tem) localStorage.setItem(UTM_STORE, JSON.stringify(o)); else { var s = JSON.parse(localStorage.getItem(UTM_STORE) || 'null'); if (s) o = s; } } catch(e){}
+    return o;
+  }
+  function mergeUrl(href, u){
+    var url = new URL(href);
+    if (UTM_KEYS.some(function(k){ return u[k]; })) UTM_KEYS.forEach(function(k){ if (u[k]) url.searchParams.set(k, u[k]); });
+    return url.toString();
+  }
+  getUtms();
+
+  // ---- condição: aparece quando o vídeo passa do momento do preço
+  var oferta = document.getElementById('oferta'), espera = document.getElementById('espera'), mostrada = false;
+  function mostrar(){
+    if (mostrada) return; mostrada = true;
+    oferta.classList.add('on'); espera.style.display = 'none';
+    try { localStorage.setItem(CHAVE, '1'); } catch(e){}
+    try { fbq('track','ViewContent',{content_name:'Elite TJ-AM aula',value:997,currency:'BRL'}); } catch(e){}
+  }
+  try { if (q.get('mostrar') === '1' || localStorage.getItem(CHAVE) === '1') mostrar(); } catch(e){}
+
+  // ---- vídeo: Vturb quando o código estiver colado; senão, a prévia local
+  var caixa = document.getElementById('video'), tpl = document.getElementById('vturb-embed');
+  function tempoVturb(){ try { return window.smartplayer.instances[0].video.currentTime || 0; } catch(e){ return 0; } }
+  if (tpl && tpl.innerHTML.trim()) {
+    caixa.appendChild(tpl.content.cloneNode(true));
+    [].slice.call(caixa.querySelectorAll('script')).forEach(function(s){ var n = document.createElement('script'); [].slice.call(s.attributes).forEach(function(a){ n.setAttribute(a.name, a.value); }); n.text = s.text; s.parentNode.replaceChild(n, s); });
+    setInterval(function(){ if (tempoVturb() >= MOSTRAR_EM) mostrar(); }, 1000);
+  } else {
+    var v = document.createElement('video'); v.src = PREVIA; v.controls = true; v.playsInline = true; v.preload = 'metadata'; v.poster = 'capa.jpg';
+    v.addEventListener('timeupdate', function(){ if (v.currentTime >= MOSTRAR_EM) mostrar(); });
+    caixa.appendChild(v);
+  }
+
+  // ---- pop-up do blindado
+  var ov = document.getElementById('mOv'), destino = '';
+  function abrir(href){ destino = mergeUrl(href, getUtms()); ov.classList.add('on'); document.body.style.overflow = 'hidden'; setTimeout(function(){ document.getElementById('mNome').focus(); }, 80); }
+  function fechar(){ ov.classList.remove('on'); document.body.style.overflow = ''; var b = document.getElementById('mBtn'); b.disabled = false; b.textContent = 'Continuar para o pagamento →'; }
+  [].slice.call(document.querySelectorAll('a.cta')).forEach(function(a){ a.addEventListener('click', function(e){ e.preventDefault(); abrir(a.href); }); });
+  document.getElementById('mX').onclick = fechar;
+  ov.addEventListener('click', function(e){ if (e.target === ov) fechar(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && ov.classList.contains('on')) fechar(); });
+  var w = document.getElementById('mWhats');
+  w.addEventListener('input', function(){ var d = w.value.replace(/\D/g,'').slice(0,11); w.value = d.length > 6 ? '(' + d.slice(0,2) + ') ' + d.slice(2, d.length - 4) + '-' + d.slice(-4) : d.length > 2 ? '(' + d.slice(0,2) + ') ' + d.slice(2) : d; });
+  document.getElementById('mForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var n = document.getElementById('mNome'), em = document.getElementById('mEmail'), b = document.getElementById('mBtn'), ok = true;
+    [n, em, w].forEach(function(x){ x.classList.remove('err'); });
+    if (n.value.trim().split(/\s+/).length < 2) { n.classList.add('err'); ok = false; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim())) { em.classList.add('err'); ok = false; }
+    var d = w.value.replace(/\D/g,''); if (d.length < 10 || d.length > 11) { w.classList.add('err'); ok = false; }
+    if (!ok) return;
+    b.disabled = true; b.textContent = 'Enviando…';
+    var u = getUtms();
+    var payload = { name: n.value.trim(), email: em.value.trim().toLowerCase(), phone: d, whatsapp: d,
+      utm_source: u.utm_source, utm_medium: u.utm_medium, utm_campaign: u.utm_campaign, utm_term: u.utm_term, utm_content: u.utm_content,
+      fbclid: u.fbclid, origin_url: location.href, page_title: document.title };
+    try { fbq('track','InitiateCheckout',{content_name:'Elite TJ-AM aula',value:997,currency:'BRL'}); } catch(e){}
+    var ir = destino + (destino.indexOf('?') < 0 ? '?' : '&') + 'name=' + encodeURIComponent(payload.name) + '&email=' + encodeURIComponent(payload.email) + '&phone=' + encodeURIComponent('55' + d);
+    if (q.get('teste') === '1') { b.textContent = 'TESTE: nada enviado'; window.__teste = { payload: payload, destino: ir }; return; }   // ?teste=1 não grava lead nem abre a régua
+    var foi = false; function go(){ if (foi) return; foi = true; location.href = ir; }
+    var t = setTimeout(go, 4000);
+    fetch(WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), mode: 'cors', keepalive: true })
+      .then(function(){ clearTimeout(t); go(); }).catch(function(){ clearTimeout(t); go(); });
+  });
+})();
+</script>
+
+
+</body>
+</html>
