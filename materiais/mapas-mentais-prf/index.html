@@ -20,10 +20,26 @@
     a.btn{display:block;background:#22c55e;color:#04140a;font-weight:700;text-decoration:none;
           padding:14px 20px;border-radius:12px;font-size:1rem;margin:0 0 12px}
     small{display:block;color:#6b7593;font-size:.78rem;margin-top:6px}
+    /* plano de estudos de quem respondeu o quiz da sala de espera (16/11/2026) */
+    .plano{display:none;text-align:left;background:#131b33;border:1px solid #2a3558;border-radius:14px;
+           padding:18px 18px 16px;margin:0 0 22px}
+    .plano-selo{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#7fe3a1}
+    .plano-tit{font-size:1.2rem;font-weight:700;line-height:1.25;margin:6px 0 12px;color:#fff}
+    .plano ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:passo}
+    .plano li{counter-increment:passo;display:flex;gap:11px;align-items:flex-start;font-size:.96rem;line-height:1.45;color:#dfe5f7}
+    .plano li::before{content:counter(passo);flex:none;width:26px;height:26px;border-radius:50%;background:#22c55e;
+           color:#04140a;font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center;margin-top:1px}
+    .plano-pe{color:#9aa4bf;font-size:.86rem;margin-top:14px;padding-top:12px;border-top:1px solid #2a3558}
   </style>
 </head>
 <body>
   <div class="box">
+    <div class="plano" id="plano">
+      <div class="plano-selo">Montado com as suas respostas</div>
+      <div class="plano-tit" id="plano-tit"></div>
+      <ol id="plano-linhas"></ol>
+      <div class="plano-pe">Abaixo estão os seus Mapas Mentais para você começar hoje.</div>
+    </div>
     <img src="../mapas-mentais-prf-857d92a3.jpg" alt="Mapas Mentais da PRF">
     <h1>Mapas Mentais da PRF</h1>
     <p>Seus mapas mentais de Legislação de Trânsito estão aqui. Toque no botão para abrir a pasta:</p>
@@ -50,6 +66,20 @@
   document.querySelectorAll("a[data-arquivo]").forEach(function (a) {
     a.addEventListener("click", function () { reg("baixou", a.getAttribute("data-arquivo")); });
   });
+  // Plano de estudos de quem respondeu o quiz da sala de espera (16/11): aparece no topo, acima dos mapas.
+  // Sem token ou sem quiz a página fica só com os mapas.
+  if (!t) return;
+  SW.api("/plano?t=" + encodeURIComponent(t)).then(function (r) {
+    var p = r && r.plano;
+    if (!p || !p.linhas || !p.linhas.length) return;
+    document.getElementById("plano-tit").textContent = p.titulo || "Seu plano de estudos";
+    var ol = document.getElementById("plano-linhas");
+    p.linhas.forEach(function (linha) {
+      var li = document.createElement("li"), s = document.createElement("span");
+      s.textContent = linha; li.appendChild(s); ol.appendChild(li);
+    });
+    document.getElementById("plano").style.display = "block";
+  }).catch(function () {});
 })();
 </script>
 </body>
