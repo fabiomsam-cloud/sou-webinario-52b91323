@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Elite PRF · trecho da aula</title>
-<meta name="description" content="O trecho da aula da PRF em que o professor Fábio fecha as três chaves da aprovação e mostra a condição de quem assistiu.">
+<meta name="description" content="O trecho da aula da PRF em que o professor Fábio mostra os dois caminhos para a aprovação e a condição de quem assistiu.">
 <meta property="og:title" content="O problema não é você. É o método.">
-<meta property="og:description" content="Assista ao trecho da aula da PRF com as três chaves da aprovação do professor Fábio.">
+<meta property="og:description" content="Assista ao trecho da aula da PRF com os dois caminhos para a aprovação.">
 <meta property="og:image" content="https://fabiomsam-cloud.github.io/sou-webinario-52b91323/cursos/ver/elite-prf-aula/og.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -15,8 +15,9 @@
   Página de vídeo do Elite PRF para quem saiu da aula sem ver a oferta (pontes P4/P5 da interligação dos funis)
   e para o remarketing. 17/11/2026. Clone da elite-tjam-aula. Regra do Fábio: lead da aula NUNCA vai para o site
   (na aula ele diz que no site é R$ 1.997 e que a condição de 12x 99,75 só vale por aqui).
-  - Vídeo: trecho da aula nova de 46:07 a 66:12 ("para a gente fechar aqui, a primeira chave da aprovação…" até
-    "eu não tenho dúvida nenhuma"). Preço dito aos 18:12 do trecho; botão citado aos 18:22.
+  - Vídeo: trecho da 2ª gravação da aula nova (PRF/PRF WEBNARIO.mp4) de 58:48 a 68:54, cortado sem recodificar:
+    "Gente, você aqui agora tem dois caminhos" até "clica no botão logo abaixo desse vídeo". Preço dito aos 8:44 do trecho.
+    (A 1ª versão, de 46:07 a 66:12 da 1ª gravação, saiu com imagem ruim e foi descartada em 17/11.)
   - Vturb: colar o código do player dentro de <template id="vturb-embed"> no fim do arquivo. Sem ele, a página usa o
     arquivo de prévia local (_previa/, fora do git).
   - A condição aparece quando o vídeo passa de MOSTRAR_EM segundos (fica guardada no navegador; ?mostrar=1 força).
@@ -78,8 +79,8 @@ fbq('init','297518201669282');fbq('track','PageView');
 <body>
 <div class="wrap">
   <div class="topo"><span>Elite PRF</span><span>Trecho da aula</span></div>
-  <h1>As três chaves da aprovação <em>na PRF</em></h1>
-  <p class="sub">Assista ao trecho da aula em que o professor Fábio fecha as três chaves da aprovação na Polícia Rodoviária Federal e mostra a condição de quem assistiu.</p>
+  <h1>Você tem dois caminhos <em>para a PRF</em></h1>
+  <p class="sub">Assista ao trecho da aula em que o professor Fábio mostra os dois caminhos para a aprovação na Polícia Rodoviária Federal e a condição de quem assistiu.</p>
 
   <div class="video" id="video"></div>
   <p class="som">Ative o som e assista até o fim.</p>
@@ -125,15 +126,15 @@ fbq('init','297518201669282');fbq('track','PageView');
   </div>
 </div>
 
-<!-- Player do Vturb (vid-6afc9b370d3c1c3586df9412, trecho 46:07–66:12 da aula nova, enviado pelo Fábio em 17/11). -->
-<template id="vturb-embed"><vturb-smartplayer id="vid-6afc9b370d3c1c3586df9412" style="display: block; margin: 0 auto; width: 100%; "><div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 56.25% 0 0; z-index: 0; background-color: black;"></div></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/98f98845-02a5-4e75-a39a-bbafedfa3212/players/6afc9b370d3c1c3586df9412/v4/player.js", s.async=!0,document.head.appendChild(s); </script></template>
+<!-- Player do Vturb (vid-6afcd237f9ab9408195bd129, trecho dos 2 caminhos da 2a gravacao, enviado pelo Fabio em 17/11). -->
+<template id="vturb-embed"><vturb-smartplayer id="vid-6afcd237f9ab9408195bd129" style="display: block; margin: 0 auto; width: 100%; "><div class="vturb-player-placeholder" style="position: relative; width: 100%; padding: 56.25% 0 0; z-index: 0; background-color: black;"></div></vturb-smartplayer> <script type="text/javascript"> var s=document.createElement("script"); s.src="https://scripts.converteai.net/98f98845-02a5-4e75-a39a-bbafedfa3212/players/6afcd237f9ab9408195bd129/v4/player.js", s.async=!0,document.head.appendChild(s); </script></template>
 
 <script>
 (function(){
-  var MOSTRAR_EM = 1090;                        // segundos do trecho: o preço é dito aos 1092 s
-  var PREVIA = '_previa/VSL-pagina-PRF-previa-720p.mp4';
+  var MOSTRAR_EM = 522;                         // segundos do trecho: o preço é dito aos 524 s
+  var PREVIA = '_previa/VSL-pagina-PRF-2-caminhos-previa-720p.mp4';
   var WEBHOOK = 'https://webhook2.manager01.scvpgti.com.br/webhook/2d9b0f1a-acc2-4111-abf4-2b2b4a110ad2';
-  var CHAVE = 'prf_aula_oferta_v1';
+  var CHAVE = 'prf_aula_oferta_v2';
   var q = new URLSearchParams(location.search);
 
   // ---- UTM: guarda a do visitante e troca a fixa do link do checkout (mesma regra do pop-up do site)
