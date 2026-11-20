@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#06080b">
+<title>TJ-AM · Mande a sua dúvida</title>
+<meta name="description" content="Escreva a sua dúvida sobre o concurso do Tribunal de Justiça do Amazonas. O Professor Fábio Silva responde todas em vídeo.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="TJ-AM · Mande a sua dúvida">
+<meta property="og:description" content="Escreva a sua dúvida sobre o concurso do Tribunal de Justiça do Amazonas. O Professor Fábio Silva responde todas em vídeo.">
+<meta property="og:image" content="https://fabiomsam-cloud.github.io/sou-webinario-52b91323/materiais/convite-grupo-tjam-2311.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="628">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root{
+  --asfalto:#06080b; --asfalto-2:#0c1015; --placa:#11161d; --borda:#232b36;
+  --amarelo:#ffcc00; --amarelo-escuro:#d9a900; --ciano:#22c7d6; --azul-prf:#0b3a8c;
+  --branco:#f4f6f8; --cinza:#9aa6b4; --erro:#ff6b5e;
+  --display:"Bebas Neue","Barlow Condensed",Impact,sans-serif;
+  --cond:"Barlow Condensed","Barlow",sans-serif;
+  --texto:"Barlow",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; min-height:100dvh; background:var(--asfalto); color:var(--branco);
+  font-family:var(--texto); font-size:17px; line-height:1.45; overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+/* fachos de luz e grão, como na arte do convite */
+body::before{
+  content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    linear-gradient(112deg, transparent 0 18%, rgba(34,199,214,.10) 18% 26%, transparent 26% 100%),
+    linear-gradient(112deg, transparent 0 62%, rgba(34,199,214,.05) 62% 74%, transparent 74% 100%),
+    radial-gradient(120% 70% at 85% 0%, rgba(11,58,140,.35), transparent 60%),
+    radial-gradient(90% 60% at 0% 100%, rgba(255,204,0,.06), transparent 60%);
+}
+body::after{
+  content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.07; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.faixa-topo{position:relative; z-index:2; height:6px; background:linear-gradient(90deg,var(--azul-prf) 0 34%,var(--amarelo) 34% 100%)}
+.pagina{position:relative; z-index:1; max-width:1120px; margin:0 auto}
+
+/* ---------- abertura ---------- */
+.abertura{position:relative; padding:20px 20px 0; min-height:250px; overflow:hidden}
+.abertura .foto{
+  position:absolute; right:-62px; top:0; height:250px; width:auto; z-index:0;
+  -webkit-mask-image:linear-gradient(90deg,transparent 2%,#000 46%),linear-gradient(0deg,transparent 0,#000 15%);
+  -webkit-mask-composite:source-in; mask-image:linear-gradient(90deg,transparent 2%,#000 46%),linear-gradient(0deg,transparent 0,#000 15%);
+  mask-composite:intersect;
+}
+.selo{
+  position:relative; z-index:1; display:inline-flex; align-items:center; gap:8px;
+  font-family:var(--cond); font-weight:600; font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--cinza);
+}
+.selo i{width:8px; height:8px; background:var(--amarelo); transform:rotate(45deg); display:block}
+.marca{position:relative; z-index:1; margin:10px 0 0}
+.marca .prf{display:block; font-family:var(--display); font-size:72px; line-height:.86; color:var(--amarelo); letter-spacing:.01em; text-shadow:0 0 34px rgba(255,204,0,.22)}
+.marca .linha{display:block; width:74px; height:5px; background:var(--ciano); margin:12px 0 10px; box-shadow:0 0 18px rgba(34,199,214,.6)}
+.marca .vagas{display:block; font-family:var(--display); font-size:41px; line-height:.9; color:#fff; letter-spacing:.015em}
+.marca .previstas{display:block; margin-top:8px; font-family:var(--cond); font-weight:600; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--ciano); max-width:15em; line-height:1.25}
+body.em-rota .marca .previstas{display:none}
+.chamada{position:relative; z-index:1; padding:12px 20px 2px}
+.chamada h1{margin:0; font-family:var(--display); font-weight:400; font-size:38px; line-height:.98; letter-spacing:.01em}
+.chamada h1 b{font-weight:400; color:var(--amarelo)}
+.chamada p{margin:10px 0 0; color:#c9d2dc; max-width:34em}
+.assina{display:block; margin-top:10px; font-family:var(--cond); font-weight:600; letter-spacing:.1em; text-transform:uppercase; font-size:13px; color:var(--cinza)}
+
+/* quando a pessoa avança, a abertura encolhe para sobrar tela */
+body.em-rota .abertura{min-height:0; padding:14px 20px 0}
+body.em-rota .abertura .foto, body.em-rota .selo, body.em-rota .chamada{display:none}
+body.em-rota .marca{margin:0; display:flex; align-items:baseline; gap:12px}
+body.em-rota .marca .prf{font-size:34px; text-shadow:none}
+body.em-rota .marca .linha{width:26px; height:3px; margin:0; align-self:center}
+body.em-rota .marca .vagas{font-size:22px; color:#dfe6ee}
+
+/* ---------- a pista (progresso) ---------- */
+.rota{position:relative; z-index:1; padding:18px 20px 40px}
+.pista{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+.pista .km{font-family:var(--cond); font-weight:700; font-size:14px; letter-spacing:.12em; color:var(--amarelo); white-space:nowrap}
+.pista .asfalto{
+  position:relative; flex:1; height:16px; border-radius:3px; background:#151a21; overflow:hidden;
+  box-shadow:inset 0 0 0 1px #1f2731, inset 0 2px 6px rgba(0,0,0,.6);
+}
+.pista .asfalto::before{ /* faixa tracejada da estrada */
+  content:""; position:absolute; left:0; right:0; top:50%; height:2px; transform:translateY(-50%);
+  background:repeating-linear-gradient(90deg, rgba(255,255,255,.34) 0 12px, transparent 12px 24px);
+}
+.pista .feito{position:absolute; left:0; top:0; bottom:0; width:0; background:linear-gradient(90deg,var(--amarelo-escuro),var(--amarelo)); transition:width .45s cubic-bezier(.2,.8,.2,1)}
+.pista .feito::after{content:""; position:absolute; right:0; top:-4px; bottom:-4px; width:3px; background:#fff; box-shadow:0 0 14px 3px rgba(255,204,0,.8)}
+
+/* ---------- cartão da pergunta ---------- */
+.placa{
+  position:relative; background:linear-gradient(180deg,#121820,#0d1218); border:1px solid var(--borda); border-radius:6px;
+  padding:22px 18px 20px; box-shadow:0 24px 60px -30px rgba(0,0,0,.9);
+}
+.placa::before{content:""; position:absolute; left:-1px; top:18px; width:4px; height:44px; background:var(--amarelo)}
+.passo{display:none}
+.passo.ativo{display:block; animation:entra .38s cubic-bezier(.2,.8,.2,1) both}
+@keyframes entra{from{opacity:0; transform:translateX(26px)}to{opacity:1; transform:none}}
+.passo.volta.ativo{animation-name:entra-volta}
+@keyframes entra-volta{from{opacity:0; transform:translateX(-26px)}to{opacity:1; transform:none}}
+.rotulo{font-family:var(--cond); font-weight:700; font-size:13px; letter-spacing:.16em; text-transform:uppercase; color:var(--ciano)}
+.pergunta{margin:6px 0 16px; font-family:var(--cond); font-weight:700; font-size:27px; line-height:1.08; letter-spacing:.005em}
+.ajuda{margin:-8px 0 14px; color:var(--cinza); font-size:15px}
+
+textarea, input[type=text], input[type=tel]{
+  width:100%; background:#080b0f; color:#fff; border:1.5px solid #2a3340; border-radius:4px;
+  font:500 18px/1.4 var(--texto); padding:14px 14px; outline:none; transition:border-color .15s, box-shadow .15s;
+}
+textarea{min-height:132px; resize:vertical}
+textarea::placeholder, input::placeholder{color:#5f6b79}
+textarea:focus, input:focus{border-color:var(--amarelo); box-shadow:0 0 0 3px rgba(255,204,0,.16)}
+label.campo{display:block; margin-bottom:12px}
+label.campo span{display:block; margin-bottom:6px; font-family:var(--cond); font-weight:600; letter-spacing:.1em; text-transform:uppercase; font-size:13px; color:var(--cinza)}
+
+.opcoes{display:grid; gap:10px}
+.opcao{
+  display:flex; align-items:center; gap:14px; width:100%; text-align:left; cursor:pointer;
+  background:#0a0e13; color:#fff; border:1.5px solid #27303c; border-radius:4px; padding:14px 14px;
+  font:600 18px/1.25 var(--texto); transition:transform .12s, border-color .12s, background .12s, color .12s;
+  -webkit-tap-highlight-color:transparent;
+}
+.opcao .letra{
+  flex:none; width:30px; height:30px; display:grid; place-items:center; border:1.5px solid #3a4553; border-radius:3px;
+  font-family:var(--cond); font-weight:700; font-size:16px; color:var(--amarelo);
+}
+.opcao:hover{border-color:#566375}
+.opcao:active{transform:scale(.985)}
+.opcao.marcada{background:var(--amarelo); border-color:var(--amarelo); color:#0a0a0a}
+.opcao.marcada .letra{border-color:#0a0a0a; color:#0a0a0a; background:rgba(0,0,0,.08)}
+.opcao:focus-visible, .botao:focus-visible, .voltar:focus-visible{outline:3px solid var(--ciano); outline-offset:2px}
+
+.botao{
+  display:flex; align-items:center; justify-content:center; gap:10px; width:100%; margin-top:16px; cursor:pointer;
+  background:var(--amarelo); color:#0a0a0a; border:0; border-radius:4px; padding:16px 18px;
+  font-family:var(--display); font-size:25px; letter-spacing:.04em; line-height:1;
+  box-shadow:0 10px 30px -10px rgba(255,204,0,.55); transition:transform .12s, filter .12s;
+}
+.botao:hover{filter:brightness(1.06)} .botao:active{transform:translateY(1px)}
+.botao[disabled]{opacity:.6; cursor:progress}
+.botao .seta{font-family:var(--texto); font-weight:700; font-size:20px}
+.botao.claro{background:transparent; color:#fff; border:1.5px solid #3a4553; box-shadow:none}
+.voltar{background:none; border:0; color:var(--cinza); font:600 15px var(--texto); padding:14px 4px 0; cursor:pointer}
+.voltar:hover{color:#fff}
+.erro{display:none; margin-top:10px; color:var(--erro); font-weight:600; font-size:15px}
+.erro.mostra{display:block}
+.isca{position:absolute; left:-9999px; width:1px; height:1px; opacity:0}
+
+/* ---------- chegada ---------- */
+.chegada{text-align:left}
+.chegada .carimbo{
+  display:inline-block; font-family:var(--display); font-size:50px; line-height:.92; color:var(--amarelo);
+  border-bottom:5px solid var(--ciano); padding-bottom:8px; margin-bottom:14px;
+}
+.chegada p{margin:0 0 10px; color:#d5dde6}
+
+.rodape{position:relative; z-index:1; padding:0 20px 34px; color:#6b7786; font-size:13px; line-height:1.5}
+.rodape b{color:#8d99a8; font-weight:600}
+
+/* ---------- telas largas ---------- */
+@media (min-width:900px){
+  .pagina{display:grid; grid-template-columns:1.05fr 1fr; gap:10px 56px; align-items:start; padding:40px 40px 0}
+  .abertura{grid-column:1; grid-row:1 / span 3; min-height:690px; padding:20px 0 0; position:sticky; top:20px}
+  .abertura .foto{right:auto; left:70px; top:232px; height:440px;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 24%,#000 76%,transparent 100%),linear-gradient(180deg,transparent 0,#000 12%,#000 78%,transparent 100%);
+    mask-image:linear-gradient(90deg,transparent 0,#000 24%,#000 76%,transparent 100%),linear-gradient(180deg,transparent 0,#000 12%,#000 78%,transparent 100%)}
+  .marca .prf{font-size:150px} .marca .vagas{font-size:84px} .marca .linha{width:120px; height:7px; margin:18px 0 16px}
+  .chamada{grid-column:2; padding:26px 0 0} .chamada h1{font-size:54px}
+  .rota{grid-column:2; padding:22px 0 30px} .rodape{grid-column:2; padding:0 0 40px}
+  .placa{padding:30px 28px 26px} .pergunta{font-size:32px}
+  body.em-rota .abertura{min-height:690px; padding:20px 0 0}
+  body.em-rota .abertura .foto, body.em-rota .selo{display:block} body.em-rota .selo{display:inline-flex}
+  body.em-rota .chamada{display:block}
+  body.em-rota .marca{display:block; margin:10px 0 0}
+  body.em-rota .marca .prf{font-size:150px} body.em-rota .marca .vagas{font-size:84px; color:#fff}
+  body.em-rota .marca .linha{width:120px; height:7px; margin:18px 0 16px}
+}
+@media (max-width:359px){ .marca .prf{font-size:66px} .marca .vagas{font-size:38px} .chamada h1{font-size:33px} .pergunta{font-size:24px} }
+@media (prefers-reduced-motion:reduce){ .passo.ativo{animation:none} .pista .feito{transition:none} }
+</style>
+</head>
+<body>
+<div class="faixa-topo"></div>
+<div class="pagina">
+
+  <header class="abertura">
+    <img class="foto" src="fabio-tjam.jpg" alt="Professor Fábio Silva" width="600" height="628">
+    <div class="selo"><i></i>Grupo de Estudos TJ-AM</div>
+    <div class="marca" aria-label="TJ-AM, 900 vagas previstas para Analista e Assistente">
+      <span class="prf">TJ-AM</span>
+      <span class="linha"></span>
+      <span class="vagas">900 VAGAS</span>
+      <span class="previstas">Previstas para Analista e Assistente</span>
+    </div>
+  </header>
+
+  <section class="chamada">
+    <h1>Mande a sua dúvida.<br><b>Eu respondo todas.</b></h1>
+    <p>Escreva o que você quer saber sobre o concurso do TJ-AM ou sobre como estudar. Eu vou juntar as dúvidas do grupo e responder em vídeo.</p>
+    <span class="assina">Professor Fábio Silva</span>
+  </section>
+
+  <main class="rota">
+    <div class="pista" id="pista">
+      <span class="km" id="km">KM 1 DE 7</span>
+      <div class="asfalto" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1" id="barra"><div class="feito" id="feito"></div></div>
+    </div>
+
+    <form class="placa" id="form" novalidate autocomplete="on">
+      <input class="isca" type="text" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+      <section class="passo ativo" data-passo="1">
+        <div class="rotulo">Sua dúvida</div>
+        <h2 class="pergunta"><label for="duvida">Qual é a sua maior dúvida sobre o concurso do TJ-AM ou sobre como estudar?</label></h2>
+        <textarea id="duvida" name="duvida" maxlength="1500" placeholder="Escreva do seu jeito. Pode mandar mais de uma."></textarea>
+        <div class="erro" id="erro-1">Escreva a sua dúvida para continuar.</div>
+        <button type="button" class="botao" data-acao="avancar">Continuar <span class="seta">→</span></button>
+      </section>
+
+      <section class="passo" data-passo="2" data-campo="objetivo">
+        <div class="rotulo">Seu objetivo</div>
+        <h2 class="pergunta">O TJ-AM para você é:</h2>
+        <div class="opcoes">
+          <button type="button" class="opcao" data-valor="unico"><span class="letra">A</span>Meu único objetivo</button>
+          <button type="button" class="opcao" data-valor="principal"><span class="letra">B</span>O principal, mas faço outros concursos</button>
+          <button type="button" class="opcao" data-valor="um_entre_varios"><span class="letra">C</span>Um entre vários</button>
+          <button type="button" class="opcao" data-valor="decidindo"><span class="letra">D</span>Ainda estou decidindo</button>
+        </div>
+        <button type="button" class="voltar" data-acao="voltar">← Voltar</button>
+      </section>
+
+      <section class="passo" data-passo="3" data-campo="inicio">
+        <div class="rotulo">Seu momento</div>
+        <h2 class="pergunta">Quando você começa a estudar para valer?</h2>
+        <div class="opcoes">
+          <button type="button" class="opcao" data-valor="ja_estudo"><span class="letra">A</span>Já estou estudando</button>
+          <button type="button" class="opcao" data-valor="este_ano"><span class="letra">B</span>Começo ainda este ano</button>
+          <button type="button" class="opcao" data-valor="2027"><span class="letra">C</span>Só em 2027</button>
+          <button type="button" class="opcao" data-valor="edital"><span class="letra">D</span>Só quando sair o edital</button>
+          <button type="button" class="opcao" data-valor="nao_sei"><span class="letra">E</span>Não sei</button>
+        </div>
+        <button type="button" class="voltar" data-acao="voltar">← Voltar</button>
+      </section>
+
+      <section class="passo" data-passo="4" data-campo="ja_pagou">
+        <div class="rotulo">Sua experiência</div>
+        <h2 class="pergunta">Você já pagou por curso ou material para concurso?</h2>
+        <div class="opcoes">
+          <button type="button" class="opcao" data-valor="tenho_agora"><span class="letra">A</span>Sim, tenho um agora</button>
+          <button type="button" class="opcao" data-valor="no_passado"><span class="letra">B</span>Sim, no passado</button>
+          <button type="button" class="opcao" data-valor="nunca"><span class="letra">C</span>Nunca</button>
+        </div>
+        <button type="button" class="voltar" data-acao="voltar">← Voltar</button>
+      </section>
+
+      <section class="passo" data-passo="5" data-campo="investimento">
+        <div class="rotulo">Sua preparação</div>
+        <h2 class="pergunta">Se fosse investir na sua preparação agora, como seria?</h2>
+        <div class="opcoes">
+          <button type="button" class="opcao" data-valor="cartao"><span class="letra">A</span>Cartão de crédito parcelado</button>
+          <button type="button" class="opcao" data-valor="a_vista"><span class="letra">B</span>Pix ou boleto à vista</button>
+          <button type="button" class="opcao" data-valor="mais_pra_frente"><span class="letra">C</span>Só consigo mais para frente</button>
+          <button type="button" class="opcao" data-valor="nao_pretendo"><span class="letra">D</span>Não pretendo investir</button>
+        </div>
+        <button type="button" class="voltar" data-acao="voltar">← Voltar</button>
+      </section>
+
+      <section class="passo" data-passo="6" data-campo="tempo_aula">
+        <div class="rotulo">Seu ritmo</div>
+        <h2 class="pergunta">Quanto tempo de aula você consegue assistir de uma vez?</h2>
+        <div class="opcoes">
+          <button type="button" class="opcao" data-valor="30_45"><span class="letra">A</span>De 30 a 45 minutos</button>
+          <button type="button" class="opcao" data-valor="ate_1h"><span class="letra">B</span>Até 1 hora</button>
+          <button type="button" class="opcao" data-valor="1h_1h30"><span class="letra">C</span>De 1 hora a 1 hora e meia</button>
+          <button type="button" class="opcao" data-valor="2h_mais"><span class="letra">D</span>2 horas ou mais</button>
+        </div>
+        <button type="button" class="voltar" data-acao="voltar">← Voltar</button>
+      </section>
+
+      <section class="passo" data-passo="7">
+        <div class="rotulo">Última parada</div>
+        <h2 class="pergunta">Para quem eu aviso quando o vídeo com a resposta sair?</h2>
+        <label class="campo"><span>Seu nome</span>
+          <input type="text" id="nome" name="nome" maxlength="80" autocomplete="name" placeholder="Como você quer ser chamado"></label>
+        <label class="campo"><span>Seu WhatsApp com DDD</span>
+          <input type="tel" id="whatsapp" name="whatsapp" inputmode="numeric" autocomplete="tel-national" placeholder="(92) 99999-9999"></label>
+        <div class="erro" id="erro-7">Confira o nome e o WhatsApp com DDD.</div>
+        <button type="submit" class="botao" id="enviar">Enviar minha dúvida <span class="seta">→</span></button>
+        <button type="button" class="voltar" data-acao="voltar">← Voltar</button>
+      </section>
+
+      <section class="passo chegada" data-passo="fim" aria-live="polite">
+        <div class="carimbo">DÚVIDA<br>RECEBIDA</div>
+        <p id="obrigado">Sua dúvida entrou na lista do vídeo.</p>
+        <p>Eu aviso quando o vídeo sair. Fique de olho no Grupo de Estudos TJ-AM.</p>
+        <button type="button" class="botao claro" data-acao="outra">Mandar outra dúvida</button>
+      </section>
+    </form>
+  </main>
+
+  <footer class="rodape">
+    <b>Sou Concurseiro e Vou Passar.</b> Suas respostas ficam só com a equipe do Professor Fábio Silva e servem para responder a sua dúvida e melhorar o conteúdo do grupo.
+  </footer>
+</div>
+
+<script>
+(function(){
+  var DESTINO = "https://dqpxugdhlgafvddavzzp.supabase.co/functions/v1/grupo-estudos-duvidas";
+  var FRENTE = "TJAM_GRUPO_ESTUDOS", TOTAL = 7, RASCUNHO = "tjam_duvida_v1";
+  var d = { duvida:"", objetivo:"", inicio:"", ja_pagou:"", investimento:"", tempo_aula:"", nome:"", whatsapp:"" };
+  var atual = 1, repetindo = false, enviando = false;
+  var $ = function(s, r){ return (r || document).querySelector(s); };
+  var $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var form = $("#form"), duvida = $("#duvida"), nome = $("#nome"), zap = $("#whatsapp");
+
+  function guardar(){ try { localStorage.setItem(RASCUNHO, JSON.stringify(d)); } catch(e){} }
+  function recuperar(){
+    try { var r = JSON.parse(localStorage.getItem(RASCUNHO) || "null"); if (r) for (var k in d) if (typeof r[k] === "string") d[k] = r[k]; } catch(e){}
+    duvida.value = d.duvida; nome.value = d.nome; zap.value = mascara(d.whatsapp);
+    $$(".passo[data-campo]").forEach(function(p){
+      $$(".opcao", p).forEach(function(o){ o.classList.toggle("marcada", o.dataset.valor === d[p.dataset.campo]); });
+    });
+  }
+  function origem(){
+    var o = {}, q = new URLSearchParams(location.search);
+    ["utm_source","utm_medium","utm_campaign","utm_content","g"].forEach(function(k){ var v = q.get(k); if (v) o[k] = v.slice(0,120); });
+    return o;
+  }
+  function digitos(v){ var n = String(v || "").replace(/\D/g, ""); if (n.indexOf("55") === 0 && n.length > 11) n = n.slice(2); return n.slice(0, 11); }
+  function mascara(v){
+    var n = digitos(v); if (!n) return "";
+    if (n.length <= 2) return "(" + n;
+    if (n.length <= 6) return "(" + n.slice(0,2) + ") " + n.slice(2);
+    if (n.length <= 10) return "(" + n.slice(0,2) + ") " + n.slice(2,6) + "-" + n.slice(6);
+    return "(" + n.slice(0,2) + ") " + n.slice(2,7) + "-" + n.slice(7);
+  }
+  function mostrar(passo, voltando){
+    $$(".passo").forEach(function(p){ p.classList.remove("ativo","volta"); });
+    var alvo = $('.passo[data-passo="' + passo + '"]');
+    if (voltando) alvo.classList.add("volta");
+    alvo.classList.add("ativo");
+    var fim = passo === "fim";
+    if (!fim) atual = passo;
+    document.body.classList.toggle("em-rota", fim || passo > 1);
+    $("#pista").style.display = fim ? "none" : "";
+    $("#km").textContent = "KM " + atual + " DE " + TOTAL;
+    $("#feito").style.width = (fim ? 100 : Math.round((atual - 1) / TOTAL * 100 + 100 / TOTAL * .5)) + "%";
+    $("#barra").setAttribute("aria-valuenow", atual);
+    if (passo > 1 || fim) window.scrollTo({ top: 0, behavior: "smooth" });
+    if (passo === 7) setTimeout(function(){ (nome.value ? zap : nome).focus({ preventScroll:true }); }, 380);
+  }
+  function validarDuvida(){
+    d.duvida = duvida.value.trim(); guardar();
+    var ok = d.duvida.length >= 5; $("#erro-1").classList.toggle("mostra", !ok); if (!ok) duvida.focus();
+    return ok;
+  }
+  function validarContato(){
+    d.nome = nome.value.trim(); d.whatsapp = digitos(zap.value); guardar();
+    var ok = d.nome.length >= 2 && (d.whatsapp.length === 10 || d.whatsapp.length === 11) && !/^(\d)\1+$/.test(d.whatsapp);
+    $("#erro-7").textContent = "Confira o nome e o WhatsApp com DDD."; $("#erro-7").classList.toggle("mostra", !ok);
+    return ok;
+  }
+  function enviar(){
+    if (enviando) return;
+    var botao = $("#enviar"), erro = $("#erro-" + (repetindo ? 1 : 7));
+    enviando = true; botao.disabled = true; erro.classList.remove("mostra");
+    var corpo = { frente: FRENTE, site: form.site.value, origem: origem() };
+    for (var k in d) corpo[k] = d[k];
+    fetch(DESTINO, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(corpo) })
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return { http:r.status, j:j }; }); })
+      .then(function(r){
+        if (!r.j.ok) throw new Error(r.j.erro || ("http " + r.http));
+        var primeiro = d.nome.split(/\s+/)[0];
+        $("#obrigado").textContent = (primeiro ? "Valeu, " + primeiro + ". " : "") + "Sua dúvida entrou na lista do vídeo.";
+        d.duvida = ""; guardar(); mostrar("fim");
+      })
+      .catch(function(e){
+        var m = String(e && e.message || "");
+        erro.textContent = m === "whatsapp" || m === "nome" ? "Confira o nome e o WhatsApp com DDD."
+          : "Não consegui enviar agora. Confira a internet e toque de novo.";
+        erro.classList.add("mostra");
+      })
+      .then(function(){ enviando = false; botao.disabled = false; });
+  }
+
+  form.addEventListener("click", function(ev){
+    var op = ev.target.closest(".opcao");
+    if (op){
+      var p = op.closest(".passo");
+      $$(".opcao", p).forEach(function(o){ o.classList.remove("marcada"); });
+      op.classList.add("marcada"); d[p.dataset.campo] = op.dataset.valor; guardar();
+      var prox = Number(p.dataset.passo) + 1;
+      setTimeout(function(){ mostrar(prox); }, 230);
+      return;
+    }
+    var b = ev.target.closest("[data-acao]"); if (!b) return;
+    if (b.dataset.acao === "avancar"){ if (validarDuvida()) { if (repetindo) enviar(); else mostrar(2); } }
+    if (b.dataset.acao === "voltar") mostrar(atual - 1, true);
+    if (b.dataset.acao === "outra"){ repetindo = true; duvida.value = ""; mostrar(1, true); document.body.classList.add("em-rota"); duvida.focus(); }
+  });
+  form.addEventListener("submit", function(ev){ ev.preventDefault(); if (atual === 7 && validarContato()) enviar(); });
+  duvida.addEventListener("input", function(){ d.duvida = duvida.value; guardar(); $("#erro-1").classList.remove("mostra"); });
+  nome.addEventListener("input", function(){ d.nome = nome.value; guardar(); });
+  zap.addEventListener("input", function(){ zap.value = mascara(zap.value); d.whatsapp = digitos(zap.value); guardar(); });
+
+  recuperar(); mostrar(1);
+})();
+</script>
+</body>
+</html>
